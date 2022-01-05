@@ -50,7 +50,7 @@ public strictfp class RobotPlayer {
 
         // Hello world! Standard output is very useful for debugging.
         // Everything you say here will be directly viewable in your terminal when you run a match!
-        //System.out.println("I'm a " + rc.getType() + " and I just got created! I have health " + rc.getHealth());
+        // System.out.println("I'm a " + rc.getType() + " and I just got created! I have health " + rc.getHealth());
 
         // You can also use indicators to save debug notes in replays.
         rc.setIndicatorString("Hello world!");
@@ -131,26 +131,41 @@ public strictfp class RobotPlayer {
     static void runMiner(RobotController rc) throws GameActionException {
         // Try to mine on squares around us.
         MapLocation me = rc.getLocation();
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                MapLocation mineLocation = new MapLocation(me.x + dx, me.y + dy);
-                // Notice that the Miner's action cooldown is very low.
-                // You can mine multiple times per turn!
-                while (rc.canMineGold(mineLocation)) {
-                    rc.mineGold(mineLocation);
+        for (MapLocation mineLocation : rc.getAllLocationsWithinRadiusSquared(me, 2)){
+            while (rc.canMineGold(mineLocation)) {
+                rc.mineGold(mineLocation);
+            }
+            while (rc.canMineLead(mineLocation)) {
+                rc.mineLead(mineLocation);
+            }
+        }
+
+        //find gold/lead around miner
+        MapLocation target = new MapLocation(0,0);
+        boolean found_gold = false;
+        for (MapLocation search : rc.getAllLocationsWithinRadiusSquared(me, 20)){
+            if (rc.senseGold(search) > 0){
+                if(search.distanceSquaredTo(me) < target.distanceSquaredTo(me)) {
+                    target = search;
+                    found_gold = true;
                 }
-                while (rc.canMineLead(mineLocation)) {
-                    rc.mineLead(mineLocation);
+            }
+            if(!found_gold && rc.senseLead(search) > 0) {
+                if (search.distanceSquaredTo(me) < target.distanceSquaredTo(me)) {
+                    target = search;
                 }
             }
         }
 
-        // Also try to move randomly.
-        Direction dir = directions[rng.nextInt(directions.length)];
-        if (rc.canMove(dir)) {
-            rc.move(dir);
-            System.out.println("I moved!");
+        // move to loc if found
+        if (target.distanceSquaredTo(me) <= 20){
+            if (rc.canMove(me.directionTo(target))){
+                rc.move(me.directionTo(target));
+            }
         }
+
+        // If nothing found, move randomly.
+        moverandom(rc);
     }
 
     /**
@@ -174,6 +189,13 @@ public strictfp class RobotPlayer {
         if (rc.canMove(dir)) {
             rc.move(dir);
             System.out.println("I moved!");
+        }
+    }
+
+    static void moverandom(RobotController rc) throws GameActionException{
+        Direction dir = directions[rng.nextInt(directions.length)];
+        if (rc.canMove(dir)) {
+            rc.move(dir);
         }
     }
 }
