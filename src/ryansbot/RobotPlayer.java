@@ -135,7 +135,7 @@ public strictfp class RobotPlayer {
             while (rc.canMineGold(mineLocation)) {
                 rc.mineGold(mineLocation);
             }
-            while (rc.canMineLead(mineLocation)) {
+            while (rc.canMineLead(mineLocation) && rc.senseLead(mineLocation) > 1) {
                 rc.mineLead(mineLocation);
             }
         }

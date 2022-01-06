@@ -12,6 +12,8 @@ strictfp class RunArchon {
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
     static final Random rng = new Random(6147);
+    static int index;
+
 
     /** Array containing all the possible movement directions. */
     static final Direction[] directions = {
@@ -33,7 +35,7 @@ strictfp class RunArchon {
         MapLocation me = rc.getLocation();
 
         if (RobotPlayer.turnCount == 0){
-            int index = 0;
+            index = 0;
             while(index < 10) {
                 if (rc.readSharedArray(index) == 0) {
                     rc.writeSharedArray(index, me.x);
@@ -53,18 +55,18 @@ strictfp class RunArchon {
         for(RobotInfo robot : troops){
             if (robot.team == rc.getTeam() && !robot.type.isBuilding()){
                 if (robot.health < robot.type.health && rc.canRepair(robot.location)){
-
+                    rc.repair(robot.location);
                 }
             }
         }
 
-
+        //build miner
         if (RobotPlayer.turnCount < 100){
             build(rc, RobotType.MINER);
         } else {
-            if(rand > 40){
+            if(rand > 20){
                 build(rc, RobotType.SOLDIER);
-            } else if (rand < 10) {
+            } else if (rand < 0) {
                 build(rc, RobotType.BUILDER);
             } else {
                 build(rc, RobotType.MINER);
