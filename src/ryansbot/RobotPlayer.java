@@ -74,7 +74,7 @@ public strictfp class RobotPlayer {
                     case MINER:      runMiner(rc);   break;
                     case SOLDIER:    runSoldier(rc); break;
                     case LABORATORY: // Examplefuncsplayer doesn't use any of these robot types below.
-                    case WATCHTOWER: // You might want to give them a try!
+                    case WATCHTOWER:
                     case BUILDER:
                     case SAGE:       break;
                 }
@@ -109,7 +109,7 @@ public strictfp class RobotPlayer {
     static void runArchon(RobotController rc) throws GameActionException {
         // Pick a direction to build in.
         Direction dir = directions[rng.nextInt(directions.length)];
-        if (rng.nextBoolean()) {
+        if (rc.getRobotCount() <= 25) {
             // Let's try to build a miner.
             rc.setIndicatorString("Trying to build a miner");
             if (rc.canBuildRobot(RobotType.MINER, dir)) {
@@ -158,14 +158,33 @@ public strictfp class RobotPlayer {
         }
 
         // move to loc if found
-        if (target.distanceSquaredTo(me) <= 20){
+        if (target.distanceSquaredTo(me) <= 20) {
             if (rc.canMove(me.directionTo(target))){
                 rc.move(me.directionTo(target));
+                return;
+            }
+        }
+
+        // move away from miners if no target
+        MapLocation closest = new MapLocation(0,0);
+        for(RobotInfo robot : rc.senseNearbyRobots()){
+            if(robot.team == rc.getTeam()){
+                if (robot.type == RobotType.MINER || robot.type == RobotType.SOLDIER){
+                    if(robot.location.distanceSquaredTo(me) < closest.distanceSquaredTo(me)){
+                        closest = robot.location;
+                    }
+                }
+            }
+        }
+        if(closest.isWithinDistanceSquared(me,20)){
+            if (rc.canMove(me.directionTo(closest).opposite())){
+                rc.move(me.directionTo(closest).opposite());
+                return;
             }
         }
 
         // If nothing found, move randomly.
-        moverandom(rc);
+        moveRandom(rc);
     }
 
     /**
@@ -173,26 +192,74 @@ public strictfp class RobotPlayer {
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
     static void runSoldier(RobotController rc) throws GameActionException {
-        // Try to attack someone
-        int radius = rc.getType().actionRadiusSquared;
-        Team opponent = rc.getTeam().opponent();
-        RobotInfo[] enemies = rc.senseNearbyRobots(radius, opponent);
-        if (enemies.length > 0) {
-            MapLocation toAttack = enemies[0].location;
-            if (rc.canAttack(toAttack)) {
-                rc.attack(toAttack);
+        // Move to attack, and prioritize the Archon
+        MapLocation me = rc.getLocation();
+        MapLocation closestEnemy = new MapLocation(0,0);
+        MapLocation archonLoc = new MapLocation(0, 0);
+        for(RobotInfo robot : rc.senseNearbyRobots()){
+            if(robot.team == rc.getTeam().opponent()) {
+                if (robot.type == RobotType.ARCHON) {
+                    closestEnemy = robot.location;
+                    archonLoc = robot.location;
+                }
+
+                else if (robot.type == RobotType.SOLDIER || robot.type == RobotType.MINER) {
+                    if (robot.location.distanceSquaredTo(me) < closestEnemy.distanceSquaredTo(me)) {
+                        closestEnemy = robot.location;
+                        archonLoc = robot.location;
+                    }
+                }
+            }
+        }
+        if (closestEnemy.isWithinDistanceSquared(me,20)){
+            if (rc.canMove(me.directionTo(closestEnemy))){
+                rc.move(me.directionTo(closestEnemy));
+                return;
             }
         }
 
-        // Also try to move randomly.
-        Direction dir = directions[rng.nextInt(directions.length)];
-        if (rc.canMove(dir)) {
-            rc.move(dir);
-            System.out.println("I moved!");
+        // Move robots to Archon
+        rc.writeSharedArray(archonLoc.x, archonLoc.y);
+        MapLocation sharedLoc = new MapLocation(rc.readSharedArray(0), rc.readSharedArray(1));
+        for (RobotInfo robot : rc.senseNearbyRobots()) {
+            if (robot.team == rc.getTeam().opponent() && robot.type == RobotType.ARCHON) {
+                if (rc.canMove(me.directionTo(sharedLoc))) {
+                    rc.move(me.directionTo(sharedLoc));
+                }
+            }
+            // Try to attack closest enemy
+            else if (robot.team == rc.getTeam().opponent()) {
+                if (robot.type == RobotType.SOLDIER || robot.type == RobotType.MINER) {
+                    if (rc.canAttack(closestEnemy)) {
+                        rc.attack(closestEnemy);
+                    }
+                }
+            }
         }
+
+        // Moves away from other soldiers
+        MapLocation closest = new MapLocation(0,0);
+        for(RobotInfo robot : rc.senseNearbyRobots()){
+            if(robot.team == rc.getTeam()){
+                if (robot.type == RobotType.SOLDIER){
+                    if(robot.location.distanceSquaredTo(me) < closest.distanceSquaredTo(me)){
+                        closest = robot.location;
+                    }
+                }
+            }
+        }
+        if (closest.isWithinDistanceSquared(me,20)){
+            if (rc.canMove(me.directionTo(closest).opposite())){
+                rc.move(me.directionTo(closest).opposite());
+                return;
+            }
+        }
+
+        // try to move randomly.
+        moveRandom(rc);
     }
 
-    static void moverandom(RobotController rc) throws GameActionException{
+    static void moveRandom(RobotController rc) throws GameActionException{
         Direction dir = directions[rng.nextInt(directions.length)];
         if (rc.canMove(dir)) {
             rc.move(dir);
