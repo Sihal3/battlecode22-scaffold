@@ -50,8 +50,13 @@ strictfp class RunMiner {
         }
 
         //move away from Archon
-        if ()
-        else if (target.distanceSquaredTo(me) <= 20) {
+        for (RobotInfo robot : rc.senseNearbyRobots(2, rc.getTeam())){
+            if (robot.type == RobotType.ARCHON){
+                continue;
+            }
+        }
+
+        if (target.distanceSquaredTo(me) <= 1000) {
             //move towards target, if exists
             if (rc.canMove(me.directionTo(target))) {
                 rc.move(me.directionTo(target));

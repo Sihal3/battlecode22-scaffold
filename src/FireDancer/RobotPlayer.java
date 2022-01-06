@@ -110,7 +110,13 @@ public strictfp class RobotPlayer {
         }
     }
 
-    static void pathfind(MapLocation target) throws GameActionException{
+    static void pathfind(RobotController rc, MapLocation target) throws GameActionException{
 
+    }
+
+    static void pathfind(RobotController rc, Direction dir) throws GameActionException{
+        if (rc.canMove(dir)) {
+            rc.move(dir);
+        }
     }
 }
