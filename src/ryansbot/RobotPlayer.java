@@ -233,7 +233,7 @@ public strictfp class RobotPlayer {
         rc.writeSharedArray(0, archonLoc.x);
         rc.writeSharedArray(1, archonLoc.y);
         MapLocation sharedLoc = new MapLocation(rc.readSharedArray(0), rc.readSharedArray(1));
-        if (sharedLoc.isWithinDistanceSquared(me, 200)) {
+        if (sharedLoc.isWithinDistanceSquared(me, 100)) {
             if (rc.canMove(me.directionTo(sharedLoc))) {
                 rc.move(me.directionTo(sharedLoc));
                 return;
