@@ -206,7 +206,6 @@ public strictfp class RobotPlayer {
                 else if (robot.type == RobotType.SOLDIER || robot.type == RobotType.MINER) {
                     if (robot.location.distanceSquaredTo(me) < closestEnemy.distanceSquaredTo(me)) {
                         closestEnemy = robot.location;
-                        archonLoc = robot.location;
                     }
                 }
             }
