@@ -2,6 +2,7 @@ package FireDancer;
 
 import battlecode.common.*;
 
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -17,7 +18,7 @@ public strictfp class RobotPlayer {
      * these variables are static, in Battlecode they aren't actually shared between your robots.
      */
     static int turnCount = 0;
-
+    static RobotController rc;
     /**
      * A random number generator.
      * We will use this RNG to make some random moves. The Random class is provided by the java.util.Random
@@ -105,12 +106,47 @@ public strictfp class RobotPlayer {
 
     static void moverandom(RobotController rc) throws GameActionException{
         Direction dir = directions[rng.nextInt(directions.length)];
+        candomove(rc, dir);
+    }
+
+    static boolean pathfind(RobotController rc, MapLocation target) throws GameActionException{
+        return pathfind(rc, rc.getLocation().directionTo(target));
+    }
+
+    static boolean pathfind(RobotController rc, Direction dir) throws GameActionException{
+        if (candomove(rc, dir)) {
+            return true;
+        } else {
+            int one = (int) (rng.nextInt(2));
+            if(one == 1) {
+                if (candomove(rc, dir.rotateLeft()))  return true;
+                else if (candomove(rc, dir.rotateRight())) return true;
+                else if (candomove(rc, directions[rng.nextInt(directions.length)])) return true;
+            }
+            if(one == 0) {
+                if (candomove(rc, dir.rotateRight()))  return true;
+                else if (candomove(rc, dir.rotateLeft())) return true;
+                else if (candomove(rc, directions[rng.nextInt(directions.length)])) return true;
+            }
+        }
+        return false;
+    }
+
+    static boolean candomove(RobotController rc, Direction dir) throws GameActionException {
         if (rc.canMove(dir)) {
             rc.move(dir);
+            return true;
         }
+        return false;
     }
 
-    static void pathfind(MapLocation target) throws GameActionException{
+    static MapLocation[] markarchons(RobotController rc) throws GameActionException{
+        MapLocation[] locs = new MapLocation[rc.getArchonCount()];
+        for(int i = 0; i < rc.getArchonCount(); i++){
+            locs[i] = new MapLocation(rc.readSharedArray(i*2), rc.readSharedArray(i*2+1));
+        }
+        return locs;
 
     }
+
 }

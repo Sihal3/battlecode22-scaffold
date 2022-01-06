@@ -30,19 +30,56 @@ strictfp class RunArchon {
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
     static void runArchon(RobotController rc) throws GameActionException {
-        // Pick a direction to build in.
-        Direction dir = directions[rng.nextInt(directions.length)];
-        if (rng.nextBoolean()) {
-            // Let's try to build a miner.
-            rc.setIndicatorString("Trying to build a miner");
-            if (rc.canBuildRobot(RobotType.MINER, dir)) {
-                rc.buildRobot(RobotType.MINER, dir);
+        MapLocation me = rc.getLocation();
+
+        if (RobotPlayer.turnCount == 0){
+            int index = 0;
+            while(index < 10) {
+                if (rc.readSharedArray(index) == 0) {
+                    rc.writeSharedArray(index, me.x);
+                    rc.writeSharedArray(index+1, me.y);
+                    break;
+                } else {
+                    index++;
+                }
             }
+        }
+
+
+        int rand = rng.nextInt(100);
+
+        //heal troops
+        RobotInfo[] troops = rc.senseNearbyRobots();
+        for(RobotInfo robot : troops){
+            if (robot.team == rc.getTeam() && !robot.type.isBuilding()){
+                if (robot.health < robot.type.health && rc.canRepair(robot.location)){
+
+                }
+            }
+        }
+
+
+        if (RobotPlayer.turnCount < 100){
+            build(rc, RobotType.MINER);
         } else {
-            // Let's try to build a soldier.
-            rc.setIndicatorString("Trying to build a soldier");
-            if (rc.canBuildRobot(RobotType.SOLDIER, dir)) {
-                rc.buildRobot(RobotType.SOLDIER, dir);
+            if(rand > 40){
+                build(rc, RobotType.SOLDIER);
+            } else if (rand < 10) {
+                build(rc, RobotType.BUILDER);
+            } else {
+                build(rc, RobotType.MINER);
+            }
+        }
+    }
+
+    static void build(RobotController rc, RobotType type) throws GameActionException{
+        Direction dir = directions[rng.nextInt(directions.length)];
+        for(int i = 0; i < 8; i++){
+            if (rc.canBuildRobot(type, dir)) {
+                rc.buildRobot(type, dir);
+                break;
+            } else {
+                dir = dir.rotateRight();
             }
         }
     }

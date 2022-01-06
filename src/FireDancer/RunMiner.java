@@ -12,6 +12,7 @@ strictfp class RunMiner {
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
     static final Random rng = new Random(6147);
+    static MapLocation[] archons;
 
     /** Array containing all the possible movement directions. */
     static final Direction[] directions = {
@@ -30,31 +31,16 @@ strictfp class RunMiner {
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
     static void runMiner(RobotController rc) throws GameActionException {
-        MapLocation me = rc.getLocation();
-
-        //find gold/lead around miner
-        MapLocation target = new MapLocation(0,0);
-        boolean found_gold = false;
-        for (MapLocation search : rc.getAllLocationsWithinRadiusSquared(me, 20)){
-            if (rc.senseGold(search) > 0){
-                if(search.distanceSquaredTo(me) < target.distanceSquaredTo(me)) {
-                    target = search;
-                    found_gold = true;
-                }
-            }
-            if(!found_gold && rc.senseLead(search) > 0) {
-                if (search.distanceSquaredTo(me) < target.distanceSquaredTo(me)) {
-                    target = search;
-                }
-            }
+        if(RobotPlayer.turnCount == 0){
+            archons = RobotPlayer.markarchons(rc);
         }
 
-        //move away from Archon
-        if (target.distanceSquaredTo(me) <= 20) {
+        MapLocation me = rc.getLocation();
+        MapLocation target = findtarget(rc, me);
+
+        if (target.distanceSquaredTo(me) <= 1000) {
             //move towards target, if exists
-            if (rc.canMove(me.directionTo(target))) {
-                rc.move(me.directionTo(target));
-            }
+            RobotPlayer.pathfind(rc, target);
         } else {
             // If nothing found, move randomly.
             RobotPlayer.moverandom(rc);
@@ -74,5 +60,45 @@ strictfp class RunMiner {
             }
         }
 
+    }
+
+    public static MapLocation findtarget(RobotController rc, MapLocation me) throws GameActionException{
+
+        //run home if greviously injured
+        if(rc.getHealth() < 15){
+            archons = RobotPlayer.markarchons(rc);
+            MapLocation closest = new MapLocation(0,0);
+            for(MapLocation loc : archons){
+                if(loc.distanceSquaredTo(me) < closest.distanceSquaredTo(me)){
+                    closest = loc;
+                }
+            }
+            return closest;
+        }
+
+        //move away from Archon
+        for (RobotInfo robot : rc.senseNearbyRobots(4, rc.getTeam())){
+            if (robot.type == RobotType.ARCHON){
+                return me.subtract(me.directionTo(robot.location).opposite());
+            }
+        }
+
+        //find gold/lead around miner
+        MapLocation target = new MapLocation(0,0);
+        boolean found_gold = false;
+        for (MapLocation search : rc.getAllLocationsWithinRadiusSquared(me, 20)){
+            if (rc.senseGold(search) > 0){
+                if(search.distanceSquaredTo(me) < target.distanceSquaredTo(me)) {
+                    target = search;
+                    found_gold = true;
+                }
+            }
+            if(!found_gold && rc.senseLead(search) > 1) {
+                if (search.distanceSquaredTo(me) < target.distanceSquaredTo(me)) {
+                    target = search;
+                }
+            }
+        }
+        return target;
     }
 }
