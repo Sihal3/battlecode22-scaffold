@@ -49,17 +49,18 @@ strictfp class RunMiner {
             }
         }
 
-        //quit if sitting on lead
-        if (rc.senseLead(me) > 0 && !found_gold) {
-            return;
-        }
-
-        // move to loc if found
-        if (target.distanceSquaredTo(me) <= 20) {
+        //move away from Archon
+        if ()
+        else if (target.distanceSquaredTo(me) <= 20) {
+            //move towards target, if exists
             if (rc.canMove(me.directionTo(target))) {
                 rc.move(me.directionTo(target));
             }
+        } else {
+            // If nothing found, move randomly.
+            RobotPlayer.moverandom(rc);
         }
+
 
         // Try to mine on squares around us.
         for (int dx = -1; dx <= 1; dx++) {
@@ -74,7 +75,5 @@ strictfp class RunMiner {
             }
         }
 
-        // If nothing found, move randomly.
-        RobotPlayer.moverandom(rc);
     }
 }
