@@ -2,6 +2,7 @@ package ryansbot;
 
 import battlecode.common.*;
 
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -109,7 +110,7 @@ public strictfp class RobotPlayer {
     static void runArchon(RobotController rc) throws GameActionException {
         // Pick a direction to build in.
         Direction dir = directions[rng.nextInt(directions.length)];
-        if (rc.getRobotCount() <= 25) {
+        if (rc.getRobotCount() <= 30) {
             // Let's try to build a miner.
             rc.setIndicatorString("Trying to build a miner");
             if (rc.canBuildRobot(RobotType.MINER, dir)) {
@@ -129,8 +130,20 @@ public strictfp class RobotPlayer {
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
     static void runMiner(RobotController rc) throws GameActionException {
-        // Try to mine on squares around us.
+        // senses Archons
         MapLocation me = rc.getLocation();
+        MapLocation archonLoc = new MapLocation(0, 0);
+        for(RobotInfo robot : rc.senseNearbyRobots()) {
+            if (robot.team == rc.getTeam().opponent()) {
+                if (robot.type == RobotType.ARCHON) {
+                    archonLoc = robot.location;
+                }
+            }
+        }
+        rc.writeSharedArray(0, archonLoc.x);
+        rc.writeSharedArray(1, archonLoc.y);
+
+        // Try to mine on squares around us.
         for (MapLocation mineLocation : rc.getAllLocationsWithinRadiusSquared(me, 2)){
             while (rc.canMineGold(mineLocation)) {
                 rc.mineGold(mineLocation);
@@ -169,7 +182,7 @@ public strictfp class RobotPlayer {
         MapLocation closest = new MapLocation(0,0);
         for(RobotInfo robot : rc.senseNearbyRobots()){
             if(robot.team == rc.getTeam()){
-                if (robot.type == RobotType.MINER || robot.type == RobotType.SOLDIER){
+                if (robot.type == RobotType.MINER || robot.type == RobotType.SOLDIER || robot.type == RobotType.ARCHON){
                     if(robot.location.distanceSquaredTo(me) < closest.distanceSquaredTo(me)){
                         closest = robot.location;
                     }
@@ -196,20 +209,19 @@ public strictfp class RobotPlayer {
         MapLocation me = rc.getLocation();
         MapLocation closestEnemy = new MapLocation(0,0);
         MapLocation archonLoc = new MapLocation(0, 0);
-        for(RobotInfo robot : rc.senseNearbyRobots()){
-            if(robot.team == rc.getTeam().opponent()) {
+        for(RobotInfo robot : rc.senseNearbyRobots()) {
+            if (robot.team == rc.getTeam().opponent()) {
                 if (robot.type == RobotType.ARCHON) {
                     closestEnemy = robot.location;
                     archonLoc = robot.location;
-                }
-
-                else if (robot.type == RobotType.SOLDIER || robot.type == RobotType.MINER) {
+                } else if (robot.type == RobotType.SOLDIER || robot.type == RobotType.MINER) {
                     if (robot.location.distanceSquaredTo(me) < closestEnemy.distanceSquaredTo(me)) {
                         closestEnemy = robot.location;
                     }
                 }
             }
         }
+
         if (closestEnemy.isWithinDistanceSquared(me,20)){
             if (rc.canMove(me.directionTo(closestEnemy))){
                 rc.move(me.directionTo(closestEnemy));
@@ -218,22 +230,19 @@ public strictfp class RobotPlayer {
         }
 
         // Move robots to Archon
-        rc.writeSharedArray(archonLoc.x, archonLoc.y);
+        rc.writeSharedArray(0, archonLoc.x);
+        rc.writeSharedArray(1, archonLoc.y);
         MapLocation sharedLoc = new MapLocation(rc.readSharedArray(0), rc.readSharedArray(1));
-        for (RobotInfo robot : rc.senseNearbyRobots()) {
-            if (robot.team == rc.getTeam().opponent() && robot.type == RobotType.ARCHON) {
-                if (rc.canMove(me.directionTo(sharedLoc))) {
-                    rc.move(me.directionTo(sharedLoc));
-                }
+        if (sharedLoc.isWithinDistanceSquared(me, 100)) {
+            if (rc.canMove(me.directionTo(sharedLoc))) {
+                rc.move(me.directionTo(sharedLoc));
+                return;
             }
-            // Try to attack closest enemy
-            else if (robot.team == rc.getTeam().opponent()) {
-                if (robot.type == RobotType.SOLDIER || robot.type == RobotType.MINER) {
-                    if (rc.canAttack(closestEnemy)) {
-                        rc.attack(closestEnemy);
-                    }
-                }
-            }
+        }
+
+        // Try to attack closest enemy
+        if (rc.canAttack(closestEnemy)) {
+            rc.attack(closestEnemy);
         }
 
         // Moves away from other soldiers
