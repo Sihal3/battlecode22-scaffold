@@ -62,7 +62,7 @@ public strictfp class RunSoldier {
                 }
             }
         }
-        if (closest.isWithinDistanceSquared(me,20)){
+        if (closest.isWithinDistanceSquared(me,10)){
             if (rc.canMove(me.directionTo(closest).opposite())){
                 rc.move(me.directionTo(closest).opposite());
                 return;

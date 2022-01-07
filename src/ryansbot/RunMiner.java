@@ -89,7 +89,7 @@ public strictfp class RunMiner {
         }
 
         //find largest lead nearby
-        MapLocation[] leads = rc.senseNearbyLocationsWithGold(100);
+        MapLocation[] leads = rc.senseNearbyLocationsWithLead(100);
         MapLocation target = new MapLocation(0,0);
 
         for (MapLocation search : leads){
