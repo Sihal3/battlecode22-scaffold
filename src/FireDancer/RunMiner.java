@@ -31,14 +31,11 @@ strictfp class RunMiner {
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
     static void runMiner(RobotController rc) throws GameActionException {
-        if(RobotPlayer.turnCount == 0){
-            archons = RobotPlayer.markarchons(rc);
-        }
 
         MapLocation me = rc.getLocation();
         MapLocation target = findtarget(rc, me);
 
-        if (target.distanceSquaredTo(me) <= 1000) {
+        if (target != null) {
             //move towards target, if exists
             RobotPlayer.pathfind(rc, target);
         } else {
@@ -64,41 +61,48 @@ strictfp class RunMiner {
 
     public static MapLocation findtarget(RobotController rc, MapLocation me) throws GameActionException{
 
-        //run home if greviously injured
-        if(rc.getHealth() < 15){
-            archons = RobotPlayer.markarchons(rc);
-            MapLocation closest = new MapLocation(0,0);
-            for(MapLocation loc : archons){
-                if(loc.distanceSquaredTo(me) < closest.distanceSquaredTo(me)){
-                    closest = loc;
-                }
+        //disintegrate if lots of miners
+        RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
+        int minercounter = 0;
+        for(RobotInfo robot : robots){
+            if(robot.type == RobotType.MINER){
+                minercounter++;
             }
-            return closest;
+            if (minercounter > 7 && rc.senseLead(me) == 0){
+                rc.disintegrate();
+            }
         }
+
 
         //move away from Archon
-        for (RobotInfo robot : rc.senseNearbyRobots(4, rc.getTeam())){
-            if (robot.type == RobotType.ARCHON){
-                return me.subtract(me.directionTo(robot.location).opposite());
+        for (RobotInfo robot : robots){
+            if (robot.type == RobotType.ARCHON && robot.location.distanceSquaredTo(me) < 5){
+                return me.subtract(me.directionTo(robot.location));
             }
         }
 
-        //find gold/lead around miner
+        //find gold
+        MapLocation[] golds = rc.senseNearbyLocationsWithGold(100);
+        if (golds.length > 0){
+            return golds[1];
+        }
+
+        //find largest lead nearby
+        MapLocation[] leads = rc.senseNearbyLocationsWithGold(100);
         MapLocation target = new MapLocation(0,0);
-        boolean found_gold = false;
-        for (MapLocation search : rc.getAllLocationsWithinRadiusSquared(me, 20)){
-            if (rc.senseGold(search) > 0){
-                if(search.distanceSquaredTo(me) < target.distanceSquaredTo(me)) {
-                    target = search;
-                    found_gold = true;
-                }
-            }
-            if(!found_gold && rc.senseLead(search) > 1) {
-                if (search.distanceSquaredTo(me) < target.distanceSquaredTo(me)) {
+
+        for (MapLocation search : leads){
+            if(rc.senseLead(search) > 1) {
+                if (target.x != 0) {
+                    if(rc.senseLead(search) > rc.senseLead(target)){
+                        target = search;
+                    }
+                } else {
                     target = search;
                 }
             }
         }
-        return target;
+
+        return target.x > 0? target : null;
     }
 }

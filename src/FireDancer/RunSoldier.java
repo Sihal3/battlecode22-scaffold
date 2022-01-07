@@ -39,7 +39,7 @@ strictfp class RunSoldier {
         MapLocation me = rc.getLocation();
         MapLocation target = findtarget(rc, me);
 
-        if (target.distanceSquaredTo(me) <= 1000) {
+        if (target != null) {
             //move towards target, if exists
             RobotPlayer.pathfind(rc, target);
         } else {
@@ -48,8 +48,9 @@ strictfp class RunSoldier {
         }
 
         // Try to attack someone
-        if (rc.canAttack(target)) {
-            rc.attack(target);
+        MapLocation enemy = findenemy(rc, me);
+        if (enemy != null && rc.canAttack(enemy)) {
+            rc.attack(enemy);
         }
 
 
@@ -70,7 +71,7 @@ strictfp class RunSoldier {
 
         //find enemies around
         MapLocation target = new MapLocation(0,0);
-        /*int radius = rc.getType().actionRadiusSquared;
+        int radius = rc.getType().actionRadiusSquared;
         Team opponent = rc.getTeam().opponent();
         RobotInfo[] enemies = rc.senseNearbyRobots(radius, opponent);
         if (enemies.length > 0) {
@@ -80,16 +81,50 @@ strictfp class RunSoldier {
                 }
             }
             return target;
-        }*/
+        }
 
-        /*/away from other soldiers
+        //away from other soldiers
+        int soldiercount = 0;
         RobotInfo[] troops = rc.senseNearbyRobots(radius, rc.getTeam());
         for (RobotInfo robot : troops){
-            if(robot.type == RobotType.SOLDIER && robot.location.distanceSquaredTo(me) < target.distanceSquaredTo(me)){
-                target = robot.location;
+            if(robot.type == RobotType.SOLDIER){
+                soldiercount++;
+                if (soldiercount > 5 && robot.location.distanceSquaredTo(me) < target.distanceSquaredTo(me)){
+                    target = me.subtract(me.directionTo(robot.location));
+                }
             }
-        }*/
-        return target;
+        }
+        return (target.x > 0)? target : null;
+    }
 
+    public static MapLocation findenemy(RobotController rc, MapLocation me) throws GameActionException{
+        MapLocation enemy = new MapLocation(0,0);
+        int attackpriority = 0;
+        for(RobotInfo robot : rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
+            if (robot.type == RobotType.ARCHON) {
+                return robot.location;
+            } else if (robot.type == RobotType.WATCHTOWER) {
+                if(attackpriority < 2){
+                    attackpriority = 2;
+                    enemy = new MapLocation(0,0);
+                }
+                if (robot.location.distanceSquaredTo(me) < enemy.distanceSquaredTo(me)) {
+                    enemy = robot.location;
+                }
+            } else if (attackpriority < 2 && robot.type == RobotType.SOLDIER) {
+                if(attackpriority < 1){
+                    attackpriority = 1;
+                    enemy = new MapLocation(0,0);
+                }
+                if (robot.location.distanceSquaredTo(me) < enemy.distanceSquaredTo(me)) {
+                    enemy = robot.location;
+                }
+            } else {
+                if (robot.location.distanceSquaredTo(me) < enemy.distanceSquaredTo(me)) {
+                    enemy = robot.location;
+                }
+            }
+        }
+        return (enemy.x > 0)? enemy : null;
     }
 }
