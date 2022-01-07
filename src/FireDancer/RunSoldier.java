@@ -32,7 +32,7 @@ strictfp class RunSoldier {
      */
     static void runSoldier(RobotController rc) throws GameActionException {
 
-        if(RobotPlayer.turnCount == 0){
+        if (RobotPlayer.turnCount == 0){
             archons = RobotPlayer.markarchons(rc);
         }
 
@@ -54,7 +54,7 @@ strictfp class RunSoldier {
 
 
     }
-    public static MapLocation findtarget(RobotController rc, MapLocation me) throws GameActionException{
+    public static MapLocation findtarget(RobotController rc, MapLocation me) throws GameActionException {
 
         //run home if greviously injured
         if(rc.getHealth() < 15){
