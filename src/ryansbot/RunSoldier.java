@@ -12,6 +12,7 @@ public strictfp class RunSoldier {
         MapLocation me = rc.getLocation();
         MapLocation closestEnemy = new MapLocation(0,0);
         MapLocation archonLoc = null;
+        RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
         for(RobotInfo robot : rc.senseNearbyRobots()) {
             if (robot.team == rc.getTeam().opponent()) {
                 if (robot.type == RobotType.ARCHON) {
@@ -51,12 +52,29 @@ public strictfp class RunSoldier {
             rc.attack(closestEnemy);
         }
 
-        // Moves away from other soldiers
+        // move away from Archon
         MapLocation closest = new MapLocation(0,0);
         for(RobotInfo robot : rc.senseNearbyRobots()){
             if(robot.team == rc.getTeam()){
+                if (robot.type == RobotType.ARCHON ){
+                    if (robot.location.distanceSquaredTo(me) < closest.distanceSquaredTo(me)){
+                        closest = robot.location;
+                    }
+                }
+            }
+        }
+        if (closest.isWithinDistanceSquared(me,10)){
+            if (rc.canMove(me.directionTo(closest).opposite())){
+                rc.move(me.directionTo(closest).opposite());
+                return;
+            }
+        }
+
+        // Moves away from other soldiers
+        for(RobotInfo robot : rc.senseNearbyRobots()){
+            if(robot.team == rc.getTeam()){
                 if (robot.type == RobotType.SOLDIER){
-                    if(robot.location.distanceSquaredTo(me) < closest.distanceSquaredTo(me)){
+                    if (robot.location.distanceSquaredTo(me) < closest.distanceSquaredTo(me)){
                         closest = robot.location;
                     }
                 }

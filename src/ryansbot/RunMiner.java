@@ -62,7 +62,7 @@ public strictfp class RunMiner {
 
     public static MapLocation findTarget(RobotController rc, MapLocation me) throws GameActionException{
 
-        //disintegrate if lots of miners
+        // disintegrate if lots of miners
         RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
         int minercounter = 0;
         for(RobotInfo robot : robots){
@@ -75,9 +75,16 @@ public strictfp class RunMiner {
         }
 
 
-        //move away from Archon
-        for (RobotInfo robot : robots){
-            if (robot.type == RobotType.ARCHON && robot.location.distanceSquaredTo(me) < 5){
+        // move away from Archon
+        for (RobotInfo robot : robots) {
+            if (robot.type == RobotType.ARCHON && robot.location.distanceSquaredTo(me) < 5) {
+                return me.subtract(me.directionTo(robot.location));
+            }
+        }
+
+        // move away from soldiers
+        for (RobotInfo robot : robots) {
+            if (robot.type == RobotType.MINER && robot.location.distanceSquaredTo(me) < 5) {
                 return me.subtract(me.directionTo(robot.location));
             }
         }
