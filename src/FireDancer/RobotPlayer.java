@@ -149,4 +149,25 @@ public strictfp class RobotPlayer {
 
     }
 
+    public static void marklocs(RobotController rc) throws GameActionException{
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+        for(RobotInfo enemy : enemies){
+            if(enemy.type.isBuilding()){
+                int index = 0;
+                while(index < 16){
+                    int x = rc.readSharedArray(index);
+                    int y = rc.readSharedArray(index+1);
+                    if(x==0 && y==0){
+                        rc.writeSharedArray(index, enemy.location.x+1);
+                        rc.writeSharedArray(index+1, enemy.location.y+1);
+                    } else if (enemy.location.equals(new MapLocation(x-1, y-1))){
+                        break;
+                    } else {
+                        index = index+2;
+                    }
+                }
+            }
+        }
+    }
+
 }

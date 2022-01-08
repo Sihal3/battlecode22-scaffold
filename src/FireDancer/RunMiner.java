@@ -1,6 +1,7 @@
 package FireDancer;
 
 import battlecode.common.*;
+import scala.collection.Map;
 
 import java.util.Random;
 
@@ -34,6 +35,8 @@ strictfp class RunMiner {
 
         MapLocation me = rc.getLocation();
         MapLocation target = findtarget(rc, me);
+
+        RobotPlayer.marklocs(rc);
 
         if (target != null) {
             //move towards target, if exists
@@ -76,7 +79,7 @@ strictfp class RunMiner {
 
         //move away from Archon
         for (RobotInfo robot : robots){
-            if (robot.type == RobotType.ARCHON && robot.location.distanceSquaredTo(me) < 5){
+            if (robot.type == RobotType.ARCHON && robot.location.distanceSquaredTo(me) < 3){
                 return me.subtract(me.directionTo(robot.location));
             }
         }
@@ -88,12 +91,12 @@ strictfp class RunMiner {
         }
 
         //find largest lead nearby
-        MapLocation[] leads = rc.senseNearbyLocationsWithGold(100);
+        MapLocation[] leads = rc.senseNearbyLocationsWithLead(100);
         MapLocation target = new MapLocation(0,0);
 
         for (MapLocation search : leads){
             if(rc.senseLead(search) > 1) {
-                if (target.x != 0) {
+                if (target.x != 0 && target.y != 0) {
                     if(rc.senseLead(search) > rc.senseLead(target)){
                         target = search;
                     }
@@ -105,4 +108,6 @@ strictfp class RunMiner {
 
         return target.x > 0? target : null;
     }
+
+
 }

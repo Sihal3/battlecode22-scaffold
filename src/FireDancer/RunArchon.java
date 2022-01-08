@@ -50,6 +50,22 @@ strictfp class RunArchon {
 
         int rand = rng.nextInt(100);
 
+        //build factor
+        int bf = Math.max(0, (500 - rc.getTeamLeadAmount(rc.getTeam()))) / 80;
+        if(RobotPlayer.turnCount % bf == (rc.getID()%bf)){
+            if (RobotPlayer.turnCount < 30) {
+                build(rc, RobotType.MINER);
+            } else {
+                if (rand > 20) {
+                    build(rc, RobotType.SOLDIER);
+                } else if (rand <= 20) {
+                    build(rc, RobotType.MINER);
+                } else {
+
+                }
+            }
+        }
+
         //heal troops
         RobotInfo[] troops = rc.senseNearbyRobots();
         for(RobotInfo robot : troops){
@@ -57,19 +73,6 @@ strictfp class RunArchon {
                 if (robot.health < robot.type.health && rc.canRepair(robot.location)){
                     rc.repair(robot.location);
                 }
-            }
-        }
-
-        //build miner
-        if (RobotPlayer.turnCount < 30){
-            build(rc, RobotType.MINER);
-        } else {
-            if(rand > 20){
-                build(rc, RobotType.SOLDIER);
-            } else if (rand < 0) {
-                build(rc, RobotType.BUILDER);
-            } else {
-                build(rc, RobotType.MINER);
             }
         }
     }

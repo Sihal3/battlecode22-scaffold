@@ -1,6 +1,7 @@
 package FireDancer;
 
 import battlecode.common.*;
+import scala.collection.Map;
 
 import java.util.Random;
 
@@ -32,9 +33,7 @@ strictfp class RunSoldier {
      */
     static void runSoldier(RobotController rc) throws GameActionException {
 
-        if(RobotPlayer.turnCount == 0){
-            archons = RobotPlayer.markarchons(rc);
-        }
+        RobotPlayer.marklocs(rc);
 
         MapLocation me = rc.getLocation();
         MapLocation target = findtarget(rc, me);
@@ -83,13 +82,34 @@ strictfp class RunSoldier {
             return target;
         }
 
+        //check target array
+        int x = rc.readSharedArray(0);
+        int y = rc.readSharedArray(1);
+        if(!(x==0 && y==0)){
+            target = new MapLocation(x-1, y-1);
+
+            //remove from array if not building anymore
+            if(rc.canSenseLocation(target)){
+                if (!rc.canSenseRobotAtLocation(target) || !rc.senseRobotAtLocation(target).type.isBuilding()){
+                    int index = 0;
+                    while (index < 16){
+                        if(rc.readSharedArray(index) == 0){
+                            break;
+                        }
+                        rc.writeSharedArray(index, index +2);
+                        rc.writeSharedArray(index+1, index +2);
+                    }
+                }
+            }
+        }
+
         //away from other soldiers
         int soldiercount = 0;
         RobotInfo[] troops = rc.senseNearbyRobots(radius, rc.getTeam());
         for (RobotInfo robot : troops){
             if(robot.type == RobotType.SOLDIER){
                 soldiercount++;
-                if (soldiercount > 5 && robot.location.distanceSquaredTo(me) < target.distanceSquaredTo(me)){
+                if (soldiercount > 3 && robot.location.distanceSquaredTo(me) < target.distanceSquaredTo(me)){
                     target = me.subtract(me.directionTo(robot.location));
                 }
             }
@@ -99,25 +119,37 @@ strictfp class RunSoldier {
 
     public static MapLocation findenemy(RobotController rc, MapLocation me) throws GameActionException{
         MapLocation enemy = new MapLocation(0,0);
+        int enemhealth = 10000;
         int attackpriority = 0;
         for(RobotInfo robot : rc.senseNearbyRobots(-1, rc.getTeam().opponent())) {
             if (robot.type == RobotType.ARCHON) {
-                return robot.location;
-            } else if (robot.type == RobotType.WATCHTOWER) {
+                if(attackpriority < 3){
+                    attackpriority = 3;
+                    enemy = new MapLocation(0,0);
+                    enemhealth = 10000;
+                }
+                if (robot.health < enemhealth) {
+                    enemy = robot.location;
+                    enemhealth = robot.health;
+                }
+            } else if (attackpriority < 3 && robot.type == RobotType.WATCHTOWER) {
                 if(attackpriority < 2){
                     attackpriority = 2;
                     enemy = new MapLocation(0,0);
+                    enemhealth = 10000;
                 }
-                if (robot.location.distanceSquaredTo(me) < enemy.distanceSquaredTo(me)) {
+                if (robot.health < enemhealth) {
                     enemy = robot.location;
+                    enemhealth = robot.health;
                 }
             } else if (attackpriority < 2 && robot.type == RobotType.SOLDIER) {
                 if(attackpriority < 1){
                     attackpriority = 1;
                     enemy = new MapLocation(0,0);
                 }
-                if (robot.location.distanceSquaredTo(me) < enemy.distanceSquaredTo(me)) {
+                if (robot.health < enemhealth) {
                     enemy = robot.location;
+                    enemhealth = robot.health;
                 }
             } else {
                 if (robot.location.distanceSquaredTo(me) < enemy.distanceSquaredTo(me)) {
