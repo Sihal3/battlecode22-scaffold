@@ -1,4 +1,4 @@
-package FireDancer;
+package arclight_v0;
 
 import battlecode.common.*;
 
@@ -51,17 +51,17 @@ strictfp class RunArchon {
         int rand = rng.nextInt(100);
 
         //build factor
-        int bf = Math.max(0, (500 - rc.getTeamLeadAmount(rc.getTeam()))) / 80;
+        int bf = (Math.max(0, (500 - rc.getTeamLeadAmount(rc.getTeam()))) / 100)+1;
         if(RobotPlayer.turnCount % bf == (rc.getID()%bf)){
             if (RobotPlayer.turnCount < 30) {
                 build(rc, RobotType.MINER);
             } else {
-                if (rand > 20) {
+                if (rand > 30) {
                     build(rc, RobotType.SOLDIER);
                 } else if (rand <= 20) {
                     build(rc, RobotType.MINER);
                 } else {
-
+                    build(rc, RobotType.BUILDER);
                 }
             }
         }

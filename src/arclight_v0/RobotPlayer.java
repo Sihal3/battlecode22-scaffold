@@ -1,8 +1,7 @@
-package FireDancer;
+package arclight_v0;
 
 import battlecode.common.*;
 
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -62,7 +61,6 @@ public strictfp class RobotPlayer {
             // loop, we call Clock.yield(), signifying that we've done everything we want to do.
 
             turnCount += 1;  // We have now been alive for one more turn!
-            System.out.println("Age: " + turnCount + "; Location: " + rc.getLocation());
 
             // Try/catch blocks stop unhandled exceptions, which cause your robot to explode.
             try {
@@ -160,6 +158,7 @@ public strictfp class RobotPlayer {
                     if(x==0 && y==0){
                         rc.writeSharedArray(index, enemy.location.x+1);
                         rc.writeSharedArray(index+1, enemy.location.y+1);
+                        break;
                     } else if (enemy.location.equals(new MapLocation(x-1, y-1))){
                         break;
                     } else {
@@ -167,6 +166,36 @@ public strictfp class RobotPlayer {
                     }
                 }
             }
+        }
+    }
+
+    public static void removelocs(RobotController rc) throws GameActionException{
+        int index = 0;
+        MapLocation loc;
+        int counter;
+        while(index < 16){
+            int x = rc.readSharedArray(index);
+            int y = rc.readSharedArray(index+1);
+            if(!(x==0 && y==0)){
+                loc = new MapLocation(x-1, y-1);
+
+                //remove from array if not building anymore
+                if(rc.canSenseLocation(loc)){
+                    if (!rc.canSenseRobotAtLocation(loc) || !rc.senseRobotAtLocation(loc).type.isBuilding()){
+                        counter = index;
+                        while (counter < 16){
+                            if(rc.readSharedArray(counter) == 0){
+                                break;
+                            }
+                            rc.writeSharedArray(counter, rc.readSharedArray(counter+2));
+                            counter++;
+                        }
+                    }
+                }
+            } else {
+                break;
+            }
+            index = index+2;
         }
     }
 

@@ -1,6 +1,5 @@
 package ryansbot;
 
-import FireDancer.RobotPlayer;
 import battlecode.common.*;
 
 import java.util.Random;
@@ -92,7 +91,7 @@ public strictfp class RunMiner {
         //find gold
         MapLocation[] golds = rc.senseNearbyLocationsWithGold(100);
         if (golds.length > 0){
-            return golds[1];
+            return golds[0];
         }
 
         //find largest lead nearby

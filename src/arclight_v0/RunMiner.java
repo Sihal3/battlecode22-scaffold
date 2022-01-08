@@ -1,7 +1,6 @@
-package FireDancer;
+package arclight_v0;
 
 import battlecode.common.*;
-import scala.collection.Map;
 
 import java.util.Random;
 
@@ -14,6 +13,8 @@ strictfp class RunMiner {
      */
     static final Random rng = new Random(6147);
     static MapLocation[] archons;
+    static int enemycount;
+    static int minercounter;
 
     /** Array containing all the possible movement directions. */
     static final Direction[] directions = {
@@ -54,7 +55,7 @@ strictfp class RunMiner {
                 while (rc.canMineGold(mineLocation)) {
                     rc.mineGold(mineLocation);
                 }
-                while (rc.canMineLead(mineLocation) && rc.senseLead(mineLocation) > 1) {
+                while (rc.canMineLead(mineLocation) && (rc.senseLead(mineLocation) > 1 || enemycount>5)) {
                     rc.mineLead(mineLocation);
                 }
             }
@@ -65,29 +66,36 @@ strictfp class RunMiner {
     public static MapLocation findtarget(RobotController rc, MapLocation me) throws GameActionException{
 
         //disintegrate if lots of miners
-        RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
-        int minercounter = 0;
+        RobotInfo[] robots = rc.senseNearbyRobots();
+        minercounter = 0;
         for(RobotInfo robot : robots){
-            if(robot.type == RobotType.MINER){
+            if(robot.team == rc.getTeam() && robot.type == RobotType.MINER){
                 minercounter++;
             }
-            if (minercounter > 7 && rc.senseLead(me) == 0){
+            if ((minercounter > 7 || rng.nextInt(1000)==0)&& rc.senseLead(me) == 0){
                 rc.disintegrate();
             }
         }
 
 
-        //move away from Archon
+        //move away from Archon or enemy
+        enemycount = 0;
         for (RobotInfo robot : robots){
-            if (robot.type == RobotType.ARCHON && robot.location.distanceSquaredTo(me) < 3){
+            if ( robot.type == RobotType.ARCHON && robot.location.distanceSquaredTo(me) < 3){
                 return me.subtract(me.directionTo(robot.location));
+            }
+            if (robot.team==rc.getTeam().opponent()){
+                if(robot.type.canAttack()) {
+                    return me.subtract(me.directionTo(robot.location));
+                }
+                enemycount++;
             }
         }
 
         //find gold
         MapLocation[] golds = rc.senseNearbyLocationsWithGold(100);
         if (golds.length > 0){
-            return golds[1];
+            return golds[0];
         }
 
         //find largest lead nearby

@@ -1,8 +1,7 @@
-package FireDancer;
+package arclight_v0;
 
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
-import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
 import java.util.Random;

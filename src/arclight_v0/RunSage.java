@@ -1,13 +1,12 @@
-package FireDancer;
+package arclight_v0;
 
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
-import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
 import java.util.Random;
 
-strictfp class RunWatch {
+strictfp class RunSage {
     /**
      * A random number generator.
      * We will use this RNG to make some random moves. The Random class is provided by the java.util.Random
@@ -29,10 +28,10 @@ strictfp class RunWatch {
     };
 
     /**
-     * Run a single turn for a Watchtower.
+     * Run a single turn for a Sage.
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
-    static void runWatchtower(RobotController rc) throws GameActionException {
+    static void runSage(RobotController rc) throws GameActionException {
 
     }
 }

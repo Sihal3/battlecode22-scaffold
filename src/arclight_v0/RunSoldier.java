@@ -1,7 +1,6 @@
-package FireDancer;
+package arclight_v0;
 
 import battlecode.common.*;
-import scala.collection.Map;
 
 import java.util.Random;
 
@@ -56,18 +55,6 @@ strictfp class RunSoldier {
     }
     public static MapLocation findtarget(RobotController rc, MapLocation me) throws GameActionException{
 
-        //run home if greviously injured
-        if(rc.getHealth() < 15){
-            archons = RobotPlayer.markarchons(rc);
-            MapLocation closest = new MapLocation(0,0);
-            for(MapLocation loc : archons){
-                if(loc.distanceSquaredTo(me) < closest.distanceSquaredTo(me)){
-                    closest = loc;
-                }
-            }
-            return closest;
-        }
-
         //find enemies around
         MapLocation target = new MapLocation(0,0);
         int radius = rc.getType().actionRadiusSquared;
@@ -79,29 +66,15 @@ strictfp class RunSoldier {
                     target = enemy.location;
                 }
             }
+            //run home if greviously injured
+            if (rc.getHealth() < 20){
+                target = me.subtract(me.directionTo(target));
+            }
+
             return target;
         }
 
-        //check target array
-        int x = rc.readSharedArray(0);
-        int y = rc.readSharedArray(1);
-        if(!(x==0 && y==0)){
-            target = new MapLocation(x-1, y-1);
 
-            //remove from array if not building anymore
-            if(rc.canSenseLocation(target)){
-                if (!rc.canSenseRobotAtLocation(target) || !rc.senseRobotAtLocation(target).type.isBuilding()){
-                    int index = 0;
-                    while (index < 16){
-                        if(rc.readSharedArray(index) == 0){
-                            break;
-                        }
-                        rc.writeSharedArray(index, index +2);
-                        rc.writeSharedArray(index+1, index +2);
-                    }
-                }
-            }
-        }
 
         //away from other soldiers
         int soldiercount = 0;
@@ -109,11 +82,22 @@ strictfp class RunSoldier {
         for (RobotInfo robot : troops){
             if(robot.type == RobotType.SOLDIER){
                 soldiercount++;
-                if (soldiercount > 3 && robot.location.distanceSquaredTo(me) < target.distanceSquaredTo(me)){
+                /*if (soldiercount > 3 && robot.location.distanceSquaredTo(me) < target.distanceSquaredTo(me)){
                     target = me.subtract(me.directionTo(robot.location));
-                }
+                }*/
+            } else if (robot.type == RobotType.ARCHON && robot.location.distanceSquaredTo(me) < 3){
+                return me.subtract(me.directionTo(robot.location));
             }
         }
+
+        //check target array
+        int x = rc.readSharedArray(0);
+        int y = rc.readSharedArray(1);
+        if(!(x==0 && y==0) && soldiercount > 7) {
+            target = new MapLocation(x - 1, y - 1);
+        }
+        RobotPlayer.removelocs(rc);
+
         return (target.x > 0)? target : null;
     }
 
