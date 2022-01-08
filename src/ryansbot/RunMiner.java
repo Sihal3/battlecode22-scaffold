@@ -34,7 +34,7 @@ public strictfp class RunMiner {
     static void runMiner(RobotController rc) throws GameActionException {
 
         MapLocation me = rc.getLocation();
-        MapLocation target = findtarget(rc, me);
+        MapLocation target = findTarget(rc, me);
 
         if (target != null) {
             //move towards target, if exists
@@ -60,7 +60,7 @@ public strictfp class RunMiner {
 
     }
 
-    public static MapLocation findtarget(RobotController rc, MapLocation me) throws GameActionException{
+    public static MapLocation findTarget(RobotController rc, MapLocation me) throws GameActionException{
 
         //disintegrate if lots of miners
         RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
