@@ -14,6 +14,7 @@ public strictfp class RunArchon {
     static final Random rng = new Random(6147);
     static int index;
 
+
     /** Array containing all the possible movement directions. */
     static final Direction[] directions = {
             Direction.NORTH,
@@ -27,21 +28,13 @@ public strictfp class RunArchon {
     };
 
     /**
-     * run() is the method that is called when a robot is instantiated in the Battlecode world.
-     * It is like the main function for your robot. If this method returns, the robot dies!
-     *
-     * @param rc  The RobotController object. You use it to perform actions from this robot, and to get
-     *            information on its current status. Essentially your portal to interacting with the world.
-     **/
-
-    /**
      * Run a single turn for an Archon.
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
     static void runArchon(RobotController rc) throws GameActionException {
         MapLocation me = rc.getLocation();
 
-        if (ryansbot.RobotPlayer.turnCount == 0){
+        if (RobotPlayer.turnCount == 0){
             index = 0;
             while(index < 10) {
                 if (rc.readSharedArray(index) == 0) {
@@ -54,8 +47,38 @@ public strictfp class RunArchon {
             }
         }
 
+        if(RobotPlayer.turnCount > 300 && rc.getTeamLeadAmount(rc.getTeam()) < 200) {
+            //heal troops
+            RobotInfo[] troops = rc.senseNearbyRobots();
+            for(RobotInfo robot : troops){
+                if (robot.team == rc.getTeam() && !robot.type.isBuilding()){
+                    if (robot.health < robot.type.health && rc.canRepair(robot.location)){
+                        rc.repair(robot.location);
+                    }
+                }
+            }
+            return;
+        }
+
 
         int rand = rng.nextInt(100);
+
+        //build factor
+        int bf = (Math.max(0, (500 - rc.getTeamLeadAmount(rc.getTeam()))) / 100) + 1;
+        if (RobotPlayer.turnCount % bf == (rc.getID() % bf)) {
+            if (RobotPlayer.turnCount < 30) {
+                build(rc, RobotType.MINER);
+            } else {
+                if (rand > 50) {
+                    build(rc, RobotType.SOLDIER);
+                } else if (rand <= 45) {
+                    build(rc, RobotType.MINER);
+                } else {
+                    build(rc, RobotType.BUILDER);
+                }
+            }
+        }
+
 
         //heal troops
         RobotInfo[] troops = rc.senseNearbyRobots();
@@ -66,22 +89,9 @@ public strictfp class RunArchon {
                 }
             }
         }
-
-        //build miner
-        if (ryansbot.RobotPlayer.turnCount < 30) {
-            build(rc, RobotType.MINER);
-        } else {
-            if(rand > 20) {
-                build(rc, RobotType.SOLDIER);
-            } else if (rand < 0) {
-                build(rc, RobotType.BUILDER);
-            } else {
-                build(rc, RobotType.MINER);
-            }
-        }
     }
 
-    static void build(RobotController rc, RobotType type) throws GameActionException {
+    static void build(RobotController rc, RobotType type) throws GameActionException{
         Direction dir = directions[rng.nextInt(directions.length)];
         for(int i = 0; i < 8; i++){
             if (rc.canBuildRobot(type, dir)) {
@@ -92,4 +102,5 @@ public strictfp class RunArchon {
             }
         }
     }
+
 }

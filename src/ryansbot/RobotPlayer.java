@@ -74,8 +74,8 @@ public strictfp class RobotPlayer {
                     case MINER:      ryansbot.RunMiner.runMiner(rc);   break;
                     case SOLDIER:    ryansbot.RunSoldier.runSoldier(rc); break;
                     case LABORATORY: // Examplefuncsplayer doesn't use any of these robot types below.
-                    case WATCHTOWER:
-                    case BUILDER:
+                    case WATCHTOWER: ryansbot.RunWatch.runWatchtower(rc); break;
+                    case BUILDER:    ryansbot.RunBuilder.runBuilder(rc); break;
                     case SAGE:       break;
                 }
             } catch (GameActionException e) {
@@ -147,5 +147,57 @@ public strictfp class RobotPlayer {
         }
         return locs;
 
+    }
+
+    public static void markLocs(RobotController rc) throws GameActionException{
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+        for(RobotInfo enemy : enemies){
+            if(enemy.type.isBuilding()){
+                int index = 0;
+                while(index < 16){
+                    int x = rc.readSharedArray(index);
+                    int y = rc.readSharedArray(index+1);
+                    if(x==0 && y==0){
+                        rc.writeSharedArray(index, enemy.location.x+1);
+                        rc.writeSharedArray(index+1, enemy.location.y+1);
+                        break;
+                    } else if (enemy.location.equals(new MapLocation(x-1, y-1))){
+                        break;
+                    } else {
+                        index = index+2;
+                    }
+                }
+            }
+        }
+    }
+
+    public static void removeLocs(RobotController rc) throws GameActionException{
+        int index = 0;
+        MapLocation loc;
+        int counter;
+        while(index < 16){
+            int x = rc.readSharedArray(index);
+            int y = rc.readSharedArray(index+1);
+            if(!(x==0 && y==0)){
+                loc = new MapLocation(x-1, y-1);
+
+                //remove from array if not building anymore
+                if(rc.canSenseLocation(loc)){
+                    if (!rc.canSenseRobotAtLocation(loc) || !rc.senseRobotAtLocation(loc).type.isBuilding()){
+                        counter = index;
+                        while (counter < 16){
+                            if(rc.readSharedArray(counter) == 0){
+                                break;
+                            }
+                            rc.writeSharedArray(counter, rc.readSharedArray(counter+2));
+                            counter++;
+                        }
+                    }
+                }
+            } else {
+                break;
+            }
+            index = index+2;
+        }
     }
 }

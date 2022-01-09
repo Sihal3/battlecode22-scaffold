@@ -19,7 +19,8 @@ public strictfp class RunSoldier {
                     closestEnemy = robot.location;
                     archonLoc = robot.location;
                     break;
-                } else if (robot.type == RobotType.SOLDIER || robot.type == RobotType.MINER) {
+                } else if (robot.type == RobotType.SOLDIER || robot.type == RobotType.MINER || robot.type ==
+                        RobotType.BUILDER || robot.type == RobotType.WATCHTOWER) {
                     if (robot.location.distanceSquaredTo(me) < closestEnemy.distanceSquaredTo(me)) {
                         closestEnemy = robot.location;
                     }
