@@ -68,7 +68,7 @@ public strictfp class RunMiner {
             if(robot.type == RobotType.MINER){
                 minercounter++;
             }
-            if (minercounter > 7 && rc.senseLead(me) == 0){
+            if (minercounter > 5 && rc.senseLead(me) == 0){
                 rc.disintegrate();
             }
         }
@@ -88,13 +88,13 @@ public strictfp class RunMiner {
             }
         }
 
-        //find gold
+        // find gold
         MapLocation[] golds = rc.senseNearbyLocationsWithGold(100);
         if (golds.length > 0){
             return golds[0];
         }
 
-        //find largest lead nearby
+        // find largest lead nearby
         MapLocation[] leads = rc.senseNearbyLocationsWithLead(100);
         MapLocation target = new MapLocation(0,0);
 
