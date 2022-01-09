@@ -1,4 +1,4 @@
-package arclight_v0;
+package arcblight_v1;
 
 import battlecode.common.*;
 
@@ -71,7 +71,7 @@ strictfp class RunSoldier {
                 target = me.subtract(me.directionTo(target));
             }
 
-            return target;
+            return (target.distanceSquaredTo(me)>20)? target : null;
         }
 
 
@@ -93,7 +93,7 @@ strictfp class RunSoldier {
         //check target array
         int x = rc.readSharedArray(0);
         int y = rc.readSharedArray(1);
-        if(!(x==0 && y==0) && soldiercount > 3) {
+        if(!(x==0 && y==0)) {
             target = new MapLocation(x - 1, y - 1);
         }
         RobotPlayer.removelocs(rc);

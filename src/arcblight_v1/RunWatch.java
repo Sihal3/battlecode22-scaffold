@@ -1,4 +1,4 @@
-package arclight_v0;
+package arcblight_v1;
 
 import battlecode.common.*;
 

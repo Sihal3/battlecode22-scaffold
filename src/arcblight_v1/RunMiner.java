@@ -1,10 +1,10 @@
-package arclight_v0;
+package arcblight_v1;
 
 import battlecode.common.*;
 
 import java.util.Random;
 
-strictfp class RunBuilder {
+strictfp class RunMiner {
     /**
      * A random number generator.
      * We will use this RNG to make some random moves. The Random class is provided by the java.util.Random
@@ -12,10 +12,9 @@ strictfp class RunBuilder {
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
     static final Random rng = new Random(6147);
-    static boolean build;
-    static RobotType buildtype;
-    static RobotInfo[] robots;
+    static MapLocation[] archons;
     static int enemycount;
+    static int minercounter;
 
     /** Array containing all the possible movement directions. */
     static final Direction[] directions = {
@@ -30,86 +29,61 @@ strictfp class RunBuilder {
     };
 
     /**
-     * Run a single turn for a Builder.
+     * Run a single turn for a Miner.
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
-    static void runBuilder(RobotController rc) throws GameActionException {
+    static void runMiner(RobotController rc) throws GameActionException {
 
         MapLocation me = rc.getLocation();
         MapLocation target = findtarget(rc, me);
-        build = false;
-        buildtype = null;
 
         RobotPlayer.marklocs(rc);
-
-        //try to heal
-        int health_percent = 100;
-        for(RobotInfo robot : robots){
-            if(robot.team == rc.getTeam() && robot.type.isBuilding() && ((robot.health*100)/robot.type.health) < health_percent){
-                target = robot.location;
-                //health_percent = ((robot.health*100)/robot.type.health);
-            }
-        }
-        if(target != null){
-            if (rc.canRepair(target)) {
-                rc.repair(target);
-            }
-        }
-
-        //try to build
-        boolean tower_in_range = false;
-        for (RobotInfo robot : robots){
-            if(robot.team == rc.getTeam() && robot.type == RobotType.WATCHTOWER){
-                tower_in_range = true;
-                break;
-            }
-        }
-
-        if(rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 5){
-            buildwatch(rc);
-        } else if (rc.senseNearbyLocationsWithLead(100).length > 7 && !tower_in_range){
-            buildwatch(rc);
-        } else if (rng.nextInt(100) == 0 && !tower_in_range){
-            buildwatch(rc);
-        }
 
         if (target != null) {
             //move towards target, if exists
             RobotPlayer.pathfind(rc, target);
-
-            /* Try to build
-            if(build){
-                if (target.isWithinDistanceSquared(me, 2) && rc.canBuildRobot(buildtype, me.directionTo(target))) {
-                    rc.buildRobot(buildtype, me.directionTo(target));
-                }
-            }*/
         } else {
             // If nothing found, move randomly.
             RobotPlayer.moverandom(rc);
         }
 
 
+        // Try to mine on squares around us.
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                MapLocation mineLocation = new MapLocation(me.x + dx, me.y + dy);
+                while (rc.canMineGold(mineLocation)) {
+                    rc.mineGold(mineLocation);
+                }
+                while (rc.canMineLead(mineLocation) && (rc.senseLead(mineLocation) > 1 || enemycount>5)) {
+                    rc.mineLead(mineLocation);
+                }
+            }
+        }
+
     }
 
     public static MapLocation findtarget(RobotController rc, MapLocation me) throws GameActionException{
 
         //disintegrate if lots of miners
-        robots = rc.senseNearbyRobots();
-        /*minercounter = 0;
+        RobotInfo[] robots = rc.senseNearbyRobots();
+        minercounter = 0;
         for(RobotInfo robot : robots){
             if(robot.team == rc.getTeam() && robot.type == RobotType.MINER){
                 minercounter++;
             }
             if ((minercounter > 7 || rng.nextInt(1000)==0)&& rc.senseLead(me) == 0){
                 rc.disintegrate();
+            } else if (minercounter > 24){
+                rc.disintegrate();
             }
         }
 
 
-        *///move away from Archon or enemy
+        //move away from Archon or enemy
         enemycount = 0;
         for (RobotInfo robot : robots){
-            if ( robot.type == RobotType.ARCHON && robot.location.distanceSquaredTo(me) < 2){
+            if ( robot.type == RobotType.ARCHON && robot.location.distanceSquaredTo(me) < 3){
                 return me.subtract(me.directionTo(robot.location));
             }
             if (robot.team==rc.getTeam().opponent()){
@@ -118,7 +92,7 @@ strictfp class RunBuilder {
                 }
                 enemycount++;
             }
-        }/*
+        }
 
         //find gold
         MapLocation[] golds = rc.senseNearbyLocationsWithGold(100);
@@ -142,20 +116,8 @@ strictfp class RunBuilder {
             }
         }
 
-        return target.x > 0? target : null;*/
-        return null;
+        return target.x > 0? target : null;
     }
 
-    public static void buildwatch(RobotController rc) throws GameActionException{
-        Direction dir = directions[rng.nextInt(directions.length)];
-        for(int i = 0; i < 8; i++){
-            if (rc.canBuildRobot(RobotType.WATCHTOWER, dir)) {
-                rc.buildRobot(RobotType.WATCHTOWER, dir);
-                break;
-            } else {
-                dir = dir.rotateRight();
-            }
-        }
-    }
 
 }

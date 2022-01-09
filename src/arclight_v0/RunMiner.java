@@ -74,6 +74,8 @@ strictfp class RunMiner {
             }
             if ((minercounter > 7 || rng.nextInt(1000)==0)&& rc.senseLead(me) == 0){
                 rc.disintegrate();
+            } else if (minercounter > 24){
+                rc.disintegrate();
             }
         }
 
