@@ -14,18 +14,8 @@ strictfp class RunWatch {
     static final Random rng = new Random(6147);
     static int since_enemy = 0;
     static int enemycount;
-
-    /** Array containing all the possible movement directions. */
-    static final Direction[] directions = {
-            Direction.NORTH,
-            Direction.NORTHEAST,
-            Direction.EAST,
-            Direction.SOUTHEAST,
-            Direction.SOUTH,
-            Direction.SOUTHWEST,
-            Direction.WEST,
-            Direction.NORTHWEST,
-    };
+    static boolean mobile = false;
+    static RobotInfo[] robots;
 
     /**
      * Run a single turn for a Watchtower.
@@ -35,17 +25,16 @@ strictfp class RunWatch {
         since_enemy++;
 
         MapLocation me = rc.getLocation();
-        MapLocation enemy = findenemy(rc, me);
+        robots = rc.senseNearbyRobots(-1, rc.getTeam());
+
+        //decide mode
+        if(rc.getMode() == RobotMode.PROTOTYPE) {
+            mobile = near_watch(rc, me);
+        }
 
         //attack enemy if present
+        MapLocation enemy = findenemy(rc, me);
         if(enemy != null){
-            //degrow legs
-            if(enemycount > 5 || rc.getHealth() < 80){
-                if (rc.getMode() == RobotMode.PORTABLE && rc.canTransform()) {
-                    rc.transform();
-                }
-            }
-
             if(rc.canAttack(enemy)){
                 rc.attack(enemy);
             }
@@ -54,7 +43,6 @@ strictfp class RunWatch {
 
         //find heal targets
         MapLocation target = null;
-        RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
         int health_percent = 100;
         for(RobotInfo robot : robots){
             if(robot.type.isBuilding() && ((robot.health*100)/robot.type.health) < health_percent){
@@ -62,7 +50,6 @@ strictfp class RunWatch {
                 health_percent = ((robot.health*100)/robot.type.health);
             }
         }
-
         //try to heal
         if(target != null){
             if (rc.canRepair(target)) {
@@ -70,22 +57,30 @@ strictfp class RunWatch {
             }
         }
 
-        //go to mobile mode
-        if(since_enemy > 300){
-            if(rc.getMode() == RobotMode.TURRET){
-                rc.transform();
+        if(mobile) {
+            //go to mobile mode
+            if (since_enemy > 30 && near_watch(rc, me)) {
+                if (rc.getMode() == RobotMode.TURRET && rc.canTransform()) {
+                    rc.transform();
+                }
             }
-        }
+            //go to turret mode
+            if (enemycount > 3) {
+                if (rc.getMode() == RobotMode.PORTABLE && rc.canTransform()) {
+                    rc.transform();
+                }
+            }
 
-        //move if in portable
-        if(rc.getMode() == RobotMode.PORTABLE) {
-            target = findtarget(rc, me);
-            if (target != null) {
-                //move towards target, if exists
-                RobotPlayer.pathfind(rc, target);
-            } else {
-                // If nothing found, move randomly.
-                RobotPlayer.moverandom(rc);
+            //move if in portable
+            if (rc.getMode() == RobotMode.PORTABLE) {
+                target = findtarget(rc, me);
+                if (target != null) {
+                    //move towards target, if exists
+                    RobotPlayer.pathfind(rc, target);
+                } else {
+                    // If nothing found, move randomly.
+                    RobotPlayer.moverandom(rc);
+                }
             }
         }
 
@@ -150,19 +145,7 @@ strictfp class RunWatch {
                     target = enemy.location;
                 }
             }
-            return target;
-        }
-
-        //away from other watchtowers
-        int watchcount = 0;
-        RobotInfo[] troops = rc.senseNearbyRobots(radius, rc.getTeam());
-        for (RobotInfo robot : troops){
-            if(robot.type == RobotType.WATCHTOWER){
-                watchcount++;
-                if (robot.location.distanceSquaredTo(me) < target.distanceSquaredTo(me)){
-                    target = me.subtract(me.directionTo(robot.location));
-                }
-            }
+            return (target.distanceSquaredTo(me)>20)? target : null;
         }
 
         //check target array
@@ -174,5 +157,15 @@ strictfp class RunWatch {
         RobotPlayer.removelocs(rc);
 
         return (target.x > 0)? target : null;
+    }
+
+    public static boolean near_watch(RobotController rc, MapLocation me) throws GameActionException{
+        for(RobotInfo robot : robots){
+            if(robot.type == RobotType.WATCHTOWER && robot.location.distanceSquaredTo(me) < 11){
+                return true;
+            }
+        }
+
+        return false;
     }
 }

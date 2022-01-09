@@ -71,7 +71,7 @@ strictfp class RunSoldier {
                 target = me.subtract(me.directionTo(target));
             }
 
-            return (target.distanceSquaredTo(me)>20)? target : null;
+            return (target.distanceSquaredTo(me)>13)? target : null;
         }
 
 

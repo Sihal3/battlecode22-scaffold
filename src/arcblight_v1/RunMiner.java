@@ -12,21 +12,10 @@ strictfp class RunMiner {
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
     static final Random rng = new Random(6147);
-    static MapLocation[] archons;
     static int enemycount;
     static int minercounter;
 
     /** Array containing all the possible movement directions. */
-    static final Direction[] directions = {
-            Direction.NORTH,
-            Direction.NORTHEAST,
-            Direction.EAST,
-            Direction.SOUTHEAST,
-            Direction.SOUTH,
-            Direction.SOUTHWEST,
-            Direction.WEST,
-            Direction.NORTHWEST,
-    };
 
     /**
      * Run a single turn for a Miner.
@@ -64,20 +53,7 @@ strictfp class RunMiner {
     }
 
     public static MapLocation findtarget(RobotController rc, MapLocation me) throws GameActionException{
-
-        //disintegrate if lots of miners
         RobotInfo[] robots = rc.senseNearbyRobots();
-        minercounter = 0;
-        for(RobotInfo robot : robots){
-            if(robot.team == rc.getTeam() && robot.type == RobotType.MINER){
-                minercounter++;
-            }
-            if ((minercounter > 7 || rng.nextInt(1000)==0)&& rc.senseLead(me) == 0){
-                rc.disintegrate();
-            } else if (minercounter > 24){
-                rc.disintegrate();
-            }
-        }
 
 
         //move away from Archon or enemy
