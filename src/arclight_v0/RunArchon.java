@@ -47,24 +47,38 @@ strictfp class RunArchon {
             }
         }
 
+        if(RobotPlayer.turnCount > 300 && rc.getTeamLeadAmount(rc.getTeam()) < 200) {
+            //heal troops
+            RobotInfo[] troops = rc.senseNearbyRobots();
+            for(RobotInfo robot : troops){
+                if (robot.team == rc.getTeam() && !robot.type.isBuilding()){
+                    if (robot.health < robot.type.health && rc.canRepair(robot.location)){
+                        rc.repair(robot.location);
+                    }
+                }
+            }
+            return;
+        }
+
 
         int rand = rng.nextInt(100);
 
         //build factor
-        int bf = (Math.max(0, (500 - rc.getTeamLeadAmount(rc.getTeam()))) / 100)+1;
-        if(RobotPlayer.turnCount % bf == (rc.getID()%bf)){
+        int bf = (Math.max(0, (500 - rc.getTeamLeadAmount(rc.getTeam()))) / 100) + 1;
+        if (RobotPlayer.turnCount % bf == (rc.getID() % bf)) {
             if (RobotPlayer.turnCount < 30) {
                 build(rc, RobotType.MINER);
             } else {
-                if (rand > 30) {
+                if (rand > 50) {
                     build(rc, RobotType.SOLDIER);
-                } else if (rand <= 20) {
+                } else if (rand <= 45) {
                     build(rc, RobotType.MINER);
                 } else {
                     build(rc, RobotType.BUILDER);
                 }
             }
         }
+
 
         //heal troops
         RobotInfo[] troops = rc.senseNearbyRobots();

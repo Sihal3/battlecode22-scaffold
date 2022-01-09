@@ -43,30 +43,45 @@ strictfp class RunBuilder {
 
         //try to heal
         int health_percent = 100;
-        MapLocation healtarget = null;
         for(RobotInfo robot : robots){
-            if(robot.type.isBuilding() && ((robot.health*100)/robot.type.health) < health_percent){
-                healtarget = robot.location;
-                health_percent = ((robot.health*100)/robot.type.health);
+            if(robot.team == rc.getTeam() && robot.type.isBuilding() && ((robot.health*100)/robot.type.health) < health_percent){
+                target = robot.location;
+                //health_percent = ((robot.health*100)/robot.type.health);
             }
         }
-        if(healtarget != null){
-            if (rc.canRepair(healtarget)) {
-                rc.repair(healtarget);
+        if(target != null){
+            if (rc.canRepair(target)) {
+                rc.repair(target);
             }
         }
 
+        //try to build
+        boolean tower_in_range = false;
+        for (RobotInfo robot : robots){
+            if(robot.team == rc.getTeam() && robot.type == RobotType.WATCHTOWER){
+                tower_in_range = true;
+                break;
+            }
+        }
+
+        if(rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 5){
+            buildwatch(rc);
+        } else if (rc.senseNearbyLocationsWithLead(100).length > 7 && !tower_in_range){
+            buildwatch(rc);
+        } else if (rng.nextInt(100) == 0 && !tower_in_range){
+            buildwatch(rc);
+        }
 
         if (target != null) {
             //move towards target, if exists
             RobotPlayer.pathfind(rc, target);
 
-            // Try to build
+            /* Try to build
             if(build){
                 if (target.isWithinDistanceSquared(me, 2) && rc.canBuildRobot(buildtype, me.directionTo(target))) {
                     rc.buildRobot(buildtype, me.directionTo(target));
                 }
-            }
+            }*/
         } else {
             // If nothing found, move randomly.
             RobotPlayer.moverandom(rc);
@@ -128,6 +143,18 @@ strictfp class RunBuilder {
 
         return target.x > 0? target : null;*/
         return null;
+    }
+
+    public static void buildwatch(RobotController rc) throws GameActionException{
+        Direction dir = directions[rng.nextInt(directions.length)];
+        for(int i = 0; i < 8; i++){
+            if (rc.canBuildRobot(RobotType.WATCHTOWER, dir)) {
+                rc.buildRobot(RobotType.WATCHTOWER, dir);
+                break;
+            } else {
+                dir = dir.rotateRight();
+            }
+        }
     }
 
 }
