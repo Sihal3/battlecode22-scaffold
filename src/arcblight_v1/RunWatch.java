@@ -11,7 +11,6 @@ strictfp class RunWatch {
      * import at the top of this file. Here, we *seed* the RNG with a constant number (6147); this makes sure
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
-    static final Random rng = new Random(6147);
     static int since_enemy = 0;
     static int enemycount;
     static boolean mobile = false;
@@ -59,13 +58,13 @@ strictfp class RunWatch {
 
         if(mobile) {
             //go to mobile mode
-            if (since_enemy > 30 && near_watch(rc, me)) {
+            if (since_enemy > 20 && near_watch(rc, me)) {
                 if (rc.getMode() == RobotMode.TURRET && rc.canTransform()) {
                     rc.transform();
                 }
             }
             //go to turret mode
-            if (enemycount > 3) {
+            if (enemycount > 1) {
                 if (rc.getMode() == RobotMode.PORTABLE && rc.canTransform()) {
                     rc.transform();
                 }
