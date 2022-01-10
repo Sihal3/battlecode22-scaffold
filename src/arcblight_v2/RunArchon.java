@@ -1,4 +1,4 @@
-package arcblight_v1;
+package arcblight_v2;
 
 import battlecode.common.*;
 
@@ -13,7 +13,7 @@ strictfp class RunArchon {
      */
     static final Random rng = new Random(6147);
     static int rand;
-
+    static int[] dir_counts;
 
     /** Array containing all the possible movement directions. */
     static final Direction[] directions = {
@@ -40,8 +40,17 @@ strictfp class RunArchon {
                 minercounter++;
             }
         }*/
-
-        if (rc.getTeamLeadAmount(rc.getTeam()) > 1000 || rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) {
+        if (rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) {
+            if (rand == 0) {
+                // Let's try to build a miner.
+                build(rc, RobotType.MINER);
+            } else if(rand < 5) {
+                // Let's try to build a builder.
+                build(rc, RobotType.BUILDER);
+            } else {
+                build(rc, RobotType.SOLDIER);
+            }
+        } else if (rc.getTeamLeadAmount(rc.getTeam()) > 1000) {
             rand = rng.nextInt(8);
             if (rand == 0) {
                 // Let's try to build a miner.
@@ -73,6 +82,27 @@ strictfp class RunArchon {
                 }
             }
         }
+
+        //clean enemy troop direction logs
+        if(RobotPlayer.turnCount%50 == 0){
+            if(rc.readSharedArray(56) != 0){
+
+            }
+        }
+
+        //tally up enemy directions
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+        if (enemies.length > 0) {
+            dir_counts = new int[8];
+            for (RobotInfo enemy : enemies){
+                //add to dircounts
+                dir_counts[RobotPlayer.dir_to_num(rc.getLocation().directionTo(enemy.location))]++;
+            }
+            for(int i = 0; i < 8; i++){
+                rc.writeSharedArray(i+56, rc.readSharedArray(i+56)+dir_counts[i]);
+            }
+        }
+
     }
 
     static void build(RobotController rc, RobotType type) throws GameActionException{

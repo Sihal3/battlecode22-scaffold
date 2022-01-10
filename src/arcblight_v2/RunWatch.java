@@ -1,8 +1,6 @@
-package arcblight_v1;
+package arcblight_v2;
 
 import battlecode.common.*;
-
-import java.util.Random;
 
 strictfp class RunWatch {
     /**
@@ -15,6 +13,9 @@ strictfp class RunWatch {
     static int enemycount;
     static boolean mobile = false;
     static RobotInfo[] robots;
+    static boolean avoidwatch = false;
+    static int[] dir_counts;
+
 
     /**
      * Run a single turn for a Watchtower.
@@ -78,7 +79,7 @@ strictfp class RunWatch {
                     RobotPlayer.pathfind(rc, target);
                 } else {
                     // If nothing found, move randomly.
-                    RobotPlayer.moverandom(rc);
+                    RobotPlayer.pathfind(rc, RobotPlayer.get_enemy_dir(rc));
                 }
             }
         }
@@ -90,7 +91,10 @@ strictfp class RunWatch {
         int enemhealth = 10000;
         int attackpriority = 0;
         enemycount = 0;
+        dir_counts = new int[8];
         for(RobotInfo robot : rc.senseNearbyRobots(rc.getType().actionRadiusSquared, rc.getTeam().opponent())) {
+            dir_counts[RobotPlayer.dir_to_num(rc.getLocation().directionTo(robot.location))]++;
+
             if (robot.type == RobotType.ARCHON) {
                 if(attackpriority < 3){
                     attackpriority = 3;
@@ -128,6 +132,9 @@ strictfp class RunWatch {
             }
             enemycount++;
         }
+        for(int i = 0; i < 8; i++){
+            rc.writeSharedArray(i+56, rc.readSharedArray(i+56)+dir_counts[i]);
+        }
         return enemy;
     }
 
@@ -145,6 +152,18 @@ strictfp class RunWatch {
                 }
             }
             return (target.distanceSquaredTo(me)>20)? target : null;
+        }
+
+        //away from other watchtowers
+        if (avoidwatch) {
+            RobotInfo[] troops = rc.senseNearbyRobots(radius, rc.getTeam());
+            for (RobotInfo robot : troops) {
+                if (robot.type == RobotType.WATCHTOWER) {
+                    if (robot.location.distanceSquaredTo(me) < target.distanceSquaredTo(me)) {
+                        target = me.subtract(me.directionTo(robot.location));
+                    }
+                }
+            }
         }
 
         //check target array

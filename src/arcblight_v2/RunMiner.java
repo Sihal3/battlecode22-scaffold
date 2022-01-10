@@ -1,8 +1,6 @@
-package arcblight_v1;
+package arcblight_v2;
 
 import battlecode.common.*;
-
-import java.util.Random;
 
 strictfp class RunMiner {
     /**
@@ -12,8 +10,8 @@ strictfp class RunMiner {
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
     static int enemycount;
+    static int[] dir_counts;
 
-    /** Array containing all the possible movement directions. */
 
     /**
      * Run a single turn for a Miner.
@@ -56,16 +54,22 @@ strictfp class RunMiner {
 
         //move away from Archon or enemy
         enemycount = 0;
+        //tally up enemy directions
         for (RobotInfo robot : robots){
+            dir_counts = new int[8];
             if ( robot.type == RobotType.ARCHON && robot.location.distanceSquaredTo(me) < 3){
                 return me.subtract(me.directionTo(robot.location));
             }
             if (robot.team==rc.getTeam().opponent()){
+                dir_counts[RobotPlayer.dir_to_num(me.directionTo(robot.location))]++;
                 if(robot.type.canAttack()) {
                     return me.subtract(me.directionTo(robot.location));
                 }
                 enemycount++;
             }
+        }
+        for(int i = 0; i < 8; i++){
+            rc.writeSharedArray(i+56, rc.readSharedArray(i+56)+dir_counts[i]);
         }
 
         //find gold
