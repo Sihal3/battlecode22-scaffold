@@ -1,4 +1,4 @@
-package ryansbot;
+package spentcoast_v1;
 
 import battlecode.common.*;
 
