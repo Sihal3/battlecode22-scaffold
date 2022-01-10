@@ -1,8 +1,7 @@
-package ryansbot;
+package spentcoast_v1;
 
 import battlecode.common.*;
 
-import java.util.Map;
 import java.util.Random;
 
 /**
@@ -70,12 +69,12 @@ public strictfp class RobotPlayer {
                 // use different strategies on different robots. If you wish, you are free to rewrite
                 // this into a different control structure!
                 switch (rc.getType()) {
-                    case ARCHON:     ryansbot.RunArchon.runArchon(rc);  break;
-                    case MINER:      ryansbot.RunMiner.runMiner(rc);   break;
-                    case SOLDIER:    ryansbot.RunSoldier.runSoldier(rc); break;
+                    case ARCHON:     spentcoast_v1.RunArchon.runArchon(rc);  break;
+                    case MINER:      spentcoast_v1.RunMiner.runMiner(rc);   break;
+                    case SOLDIER:    spentcoast_v1.RunSoldier.runSoldier(rc); break;
                     case LABORATORY: // Examplefuncsplayer doesn't use any of these robot types below.
-                    case WATCHTOWER: ryansbot.RunWatch.runWatchtower(rc); break;
-                    case BUILDER:    ryansbot.RunBuilder.runBuilder(rc); break;
+                    case WATCHTOWER: spentcoast_v1.RunWatch.runWatchtower(rc); break;
+                    case BUILDER:    spentcoast_v1.RunBuilder.runBuilder(rc); break;
                     case SAGE:       break;
                 }
             } catch (GameActionException e) {
@@ -198,6 +197,28 @@ public strictfp class RobotPlayer {
                 break;
             }
             index = index+2;
+        }
+    }
+
+    public static int dir_to_num(Direction dir) throws GameActionException{
+        if(dir == Direction.NORTH){
+            return 0;
+        } else if (dir == Direction.NORTHEAST){
+            return 1;
+        } else if (dir == Direction.EAST){
+            return 2;
+        } else if (dir == Direction.SOUTHEAST){
+            return 3;
+        } else if (dir == Direction.SOUTH){
+            return 4;
+        } else if (dir == Direction.SOUTHWEST){
+            return 5;
+        } else if (dir == Direction.WEST){
+            return 6;
+        } else if (dir == Direction.NORTHWEST){
+            return 7;
+        } else {
+            return -1;
         }
     }
 }

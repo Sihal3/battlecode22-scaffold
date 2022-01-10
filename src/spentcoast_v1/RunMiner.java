@@ -1,30 +1,17 @@
-package ryansbot;
+package spentcoast_v1;
 
 import battlecode.common.*;
 
-import java.util.Random;
-
-public strictfp class RunMiner {
+strictfp class RunMiner {
     /**
      * A random number generator.
      * We will use this RNG to make some random moves. The Random class is provided by the java.util.Random
      * import at the top of this file. Here, we *seed* the RNG with a constant number (6147); this makes sure
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
-    static final Random rng = new Random(6147);
-    static MapLocation[] archons;
+    static int enemycount;
+    static int[] dir_counts;
 
-    /** Array containing all the possible movement directions. */
-    static final Direction[] directions = {
-            Direction.NORTH,
-            Direction.NORTHEAST,
-            Direction.EAST,
-            Direction.SOUTHEAST,
-            Direction.SOUTH,
-            Direction.SOUTHWEST,
-            Direction.WEST,
-            Direction.NORTHWEST,
-    };
 
     /**
      * Run a single turn for a Miner.
@@ -35,12 +22,14 @@ public strictfp class RunMiner {
         MapLocation me = rc.getLocation();
         MapLocation target = findTarget(rc, me);
 
+        RobotPlayer.markLocs(rc);
+
         if (target != null) {
             //move towards target, if exists
-            ryansbot.RobotPlayer.pathFind(rc, target);
+            RobotPlayer.pathFind(rc, target);
         } else {
             // If nothing found, move randomly.
-            ryansbot.RobotPlayer.moveRandom(rc);
+            RobotPlayer.moveRandom(rc);
         }
 
 
@@ -51,7 +40,7 @@ public strictfp class RunMiner {
                 while (rc.canMineGold(mineLocation)) {
                     rc.mineGold(mineLocation);
                 }
-                while (rc.canMineLead(mineLocation) && rc.senseLead(mineLocation) > 1) {
+                while (rc.canMineLead(mineLocation) && (rc.senseLead(mineLocation) > 1 || enemycount>5)) {
                     rc.mineLead(mineLocation);
                 }
             }
@@ -60,47 +49,42 @@ public strictfp class RunMiner {
     }
 
     public static MapLocation findTarget(RobotController rc, MapLocation me) throws GameActionException{
-
-        // disintegrate if lots of miners
-        RobotInfo[] robots = rc.senseNearbyRobots(-1, rc.getTeam());
-        int minercounter = 0;
-        for(RobotInfo robot : robots){
-            if(robot.type == RobotType.MINER){
-                minercounter++;
-            }
-            if (minercounter > 5 && rc.senseLead(me) == 0){
-                rc.disintegrate();
-            }
-        }
+        RobotInfo[] robots = rc.senseNearbyRobots();
 
 
-        // move away from Archon
-        for (RobotInfo robot : robots) {
-            if (robot.type == RobotType.ARCHON && robot.location.distanceSquaredTo(me) < 5) {
+        //move away from Archon or enemy
+        enemycount = 0;
+        //tally up enemy directions
+        for (RobotInfo robot : robots){
+            dir_counts = new int[8];
+            if ( robot.type == RobotType.ARCHON && robot.location.distanceSquaredTo(me) < 3){
                 return me.subtract(me.directionTo(robot.location));
             }
-        }
-
-        // move away from soldiers
-        for (RobotInfo robot : robots) {
-            if (robot.type == RobotType.MINER && robot.location.distanceSquaredTo(me) < 5) {
-                return me.subtract(me.directionTo(robot.location));
+            if (robot.team==rc.getTeam().opponent()){
+                dir_counts[RobotPlayer.dir_to_num(me.directionTo(robot.location))]++;
+                if(robot.type.canAttack()) {
+                    return me.subtract(me.directionTo(robot.location));
+                }
+                enemycount++;
             }
         }
+        for(int i = 0; i < 8; i++){
+            rc.writeSharedArray(i+56, rc.readSharedArray(i+56)+dir_counts[i]);
+        }
 
-        // find gold
+        //find gold
         MapLocation[] golds = rc.senseNearbyLocationsWithGold(100);
         if (golds.length > 0){
             return golds[0];
         }
 
-        // find largest lead nearby
+        //find largest lead nearby
         MapLocation[] leads = rc.senseNearbyLocationsWithLead(100);
         MapLocation target = new MapLocation(0,0);
 
         for (MapLocation search : leads){
             if(rc.senseLead(search) > 1) {
-                if (target.x != 0) {
+                if (target.x != 0 && target.y != 0) {
                     if(rc.senseLead(search) > rc.senseLead(target)){
                         target = search;
                     }
@@ -112,4 +96,6 @@ public strictfp class RunMiner {
 
         return target.x > 0? target : null;
     }
+
+
 }
