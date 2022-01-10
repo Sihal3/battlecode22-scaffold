@@ -18,8 +18,9 @@ strictfp class RunBuilder {
     static MapLocation home;
     static MapLocation target;
     static MapLocation me;
-    static MapLocation[] avoids;
     static int surrounded_count = 0;
+    static boolean mutate = false;
+    static int[] dir_counts;
 
 
     /**
@@ -43,6 +44,21 @@ strictfp class RunBuilder {
 
         RobotPlayer.marklocs(rc);
 
+        //tally up enemy directions
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+        if (enemies.length > 0) {
+            dir_counts = new int[8];
+            for (RobotInfo enemy : enemies){
+                //add to dircounts
+                dir_counts[RobotPlayer.dir_to_num(me.directionTo(enemy.location))]++;
+            }
+            for(int i = 0; i < 8; i++){
+                rc.writeSharedArray(i+56, rc.readSharedArray(i+56)+dir_counts[i]);
+            }
+        }
+
+
+
         //try to heal and upgrade
         int health = 0;
         target = null;
@@ -52,8 +68,10 @@ strictfp class RunBuilder {
                     target = robot.location;
                     health = robot.health * 100;
                 }
-                if(rc.canMutate(robot.location)){
-                    rc.mutate(robot.location);
+                if(mutate){
+                    if(rc.canMutate(robot.location)){
+                        rc.mutate(robot.location);
+                    }
                 }
             }
         }
@@ -64,8 +82,6 @@ strictfp class RunBuilder {
             }
             RobotPlayer.pathfind(rc, target);
         }
-
-
 
         //try to build if no other towers
         Direction builder = builddir(rc);

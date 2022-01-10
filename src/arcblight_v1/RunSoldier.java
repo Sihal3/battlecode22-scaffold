@@ -11,20 +11,8 @@ strictfp class RunSoldier {
      * import at the top of this file. Here, we *seed* the RNG with a constant number (6147); this makes sure
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
-    static final Random rng = new Random(6147);
-    static MapLocation[] archons;
-
-    /** Array containing all the possible movement directions. */
-    static final Direction[] directions = {
-            Direction.NORTH,
-            Direction.NORTHEAST,
-            Direction.EAST,
-            Direction.SOUTHEAST,
-            Direction.SOUTH,
-            Direction.SOUTHWEST,
-            Direction.WEST,
-            Direction.NORTHWEST,
-    };
+    static boolean avoidsoldiers = false;
+    static int[] dir_counts;
 
     /**
      * Run a single turn for a Soldier.
@@ -41,8 +29,8 @@ strictfp class RunSoldier {
             //move towards target, if exists
             RobotPlayer.pathfind(rc, target);
         } else {
-            // If nothing found, move randomly.
-            RobotPlayer.moverandom(rc);
+            // If nothing found, move semi-randomly.
+            RobotPlayer.pathfind(rc, RobotPlayer.get_enemy_dir(rc));
         }
 
         // Try to attack someone
@@ -56,25 +44,38 @@ strictfp class RunSoldier {
     public static MapLocation findtarget(RobotController rc, MapLocation me) throws GameActionException{
 
         //find enemies around
-        MapLocation target = new MapLocation(0,0);
+        MapLocation target = new MapLocation(1000,1000);
         int radius = rc.getType().actionRadiusSquared;
         Team opponent = rc.getTeam().opponent();
         RobotInfo[] enemies = rc.senseNearbyRobots(radius, opponent);
         if (enemies.length > 0) {
+            dir_counts = new int[8];
             for (RobotInfo enemy : enemies){
                 if(enemy.location.distanceSquaredTo(me) < target.distanceSquaredTo(me)){
                     target = enemy.location;
                 }
+
+                //add to dircounts
+                dir_counts[RobotPlayer.dir_to_num(me.directionTo(enemy.location))]++;
             }
             //run home if greviously injured
             if (rc.getHealth() < 20){
                 target = me.subtract(me.directionTo(target));
             }
 
+            for(int i = 0; i < 8; i++){
+                rc.writeSharedArray(i+56, rc.readSharedArray(i+56)+dir_counts[i]);
+            }
             return (target.distanceSquaredTo(me)>13)? target : null;
         }
 
-
+        //check target array
+        int x = rc.readSharedArray(0);
+        int y = rc.readSharedArray(1);
+        RobotPlayer.removelocs(rc);
+        if(!(x==0 && y==0)) {
+            return new MapLocation(x - 1, y - 1);
+        }
 
         //away from other soldiers
         int soldiercount = 0;
@@ -82,21 +83,15 @@ strictfp class RunSoldier {
         for (RobotInfo robot : troops){
             if(robot.type == RobotType.SOLDIER){
                 soldiercount++;
-                /*if (soldiercount > 3 && robot.location.distanceSquaredTo(me) < target.distanceSquaredTo(me)){
-                    target = me.subtract(me.directionTo(robot.location));
-                }*/
+                if(avoidsoldiers) {
+                    if (soldiercount > 3 && robot.location.distanceSquaredTo(me) < target.distanceSquaredTo(me)) {
+                        target = me.subtract(me.directionTo(robot.location));
+                    }
+                }
             } else if (robot.type == RobotType.ARCHON && robot.location.distanceSquaredTo(me) < 3){
                 return me.subtract(me.directionTo(robot.location));
             }
         }
-
-        //check target array
-        int x = rc.readSharedArray(0);
-        int y = rc.readSharedArray(1);
-        if(!(x==0 && y==0)) {
-            target = new MapLocation(x - 1, y - 1);
-        }
-        RobotPlayer.removelocs(rc);
 
         return (target.x > 0)? target : null;
     }

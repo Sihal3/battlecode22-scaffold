@@ -18,6 +18,7 @@ public strictfp class RobotPlayer {
      */
     static int turnCount = 0;
     static RobotController rc;
+    static boolean probmode = false;
     /**
      * A random number generator.
      * We will use this RNG to make some random moves. The Random class is provided by the java.util.Random
@@ -188,6 +189,67 @@ public strictfp class RobotPlayer {
                 break;
             }
             index = index+2;
+        }
+    }
+
+    public static Direction get_enemy_dir(RobotController rc) throws GameActionException{
+        if(probmode) {
+            int[] probs = new int[8];
+            int total = 0;
+            for (int i = 0; i < 8; i++) {
+                total += rc.readSharedArray(i + 56);
+                probs[i] = rc.readSharedArray(i + 56);
+            }
+
+            if (total > 0) {
+                int rand = rng.nextInt(total);
+                int prob_tally = 0;
+                for (int i = 0; i < 8; i++) {
+                    prob_tally += probs[i];
+                    if (prob_tally > rand) {
+                        return directions[i];
+                    }
+                }
+                return Direction.CENTER;
+            } else {
+                return directions[rng.nextInt(directions.length)];
+            }
+        } else {
+            int counter = 0;
+            int dir = 8;
+            for (int i = 0; i < 8; i++) {
+                if(rc.readSharedArray(i + 56) > counter){
+                    counter = rc.readSharedArray(i+56);
+                    dir = i;
+                }
+            }
+            if (counter > 0) {
+                return directions[dir];
+            } else {
+                return directions[rng.nextInt(directions.length)];
+            }
+        }
+    }
+
+    public static int dir_to_num(Direction dir) throws GameActionException{
+        if(dir == Direction.NORTH){
+            return 0;
+        } else if (dir == Direction.NORTHEAST){
+            return 1;
+        } else if (dir == Direction.EAST){
+            return 2;
+        } else if (dir == Direction.SOUTHEAST){
+            return 3;
+        } else if (dir == Direction.SOUTH){
+            return 4;
+        } else if (dir == Direction.SOUTHWEST){
+            return 5;
+        } else if (dir == Direction.WEST){
+            return 6;
+        } else if (dir == Direction.NORTHWEST){
+            return 7;
+        } else {
+            return -1;
         }
     }
 

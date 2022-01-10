@@ -154,11 +154,9 @@ strictfp class RunWatch {
         }
 
         //away from other watchtowers
-        int watchcount = 0;
         RobotInfo[] troops = rc.senseNearbyRobots(radius, rc.getTeam());
         for (RobotInfo robot : troops){
             if(robot.type == RobotType.WATCHTOWER){
-                watchcount++;
                 if (robot.location.distanceSquaredTo(me) < target.distanceSquaredTo(me)){
                     target = me.subtract(me.directionTo(robot.location));
                 }

@@ -13,7 +13,7 @@ strictfp class RunArchon {
      */
     static final Random rng = new Random(6147);
     static int rand;
-
+    static int[] dir_counts;
 
     /** Array containing all the possible movement directions. */
     static final Direction[] directions = {
@@ -73,6 +73,27 @@ strictfp class RunArchon {
                 }
             }
         }
+
+        //clean enemy troop direction logs
+        if(RobotPlayer.turnCount%50 == 0){
+            if(rc.readSharedArray(56) != 0){
+
+            }
+        }
+
+        //tally up enemy directions
+        RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
+        if (enemies.length > 0) {
+            dir_counts = new int[8];
+            for (RobotInfo enemy : enemies){
+                //add to dircounts
+                dir_counts[RobotPlayer.dir_to_num(rc.getLocation().directionTo(enemy.location))]++;
+            }
+            for(int i = 0; i < 8; i++){
+                rc.writeSharedArray(i+56, rc.readSharedArray(i+56)+dir_counts[i]);
+            }
+        }
+
     }
 
     static void build(RobotController rc, RobotType type) throws GameActionException{
