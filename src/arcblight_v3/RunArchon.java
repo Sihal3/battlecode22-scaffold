@@ -1,4 +1,4 @@
-package arcblight_v2;
+package arcblight_v3;
 
 import battlecode.common.*;
 
@@ -13,7 +13,9 @@ strictfp class RunArchon {
      */
     static final Random rng = new Random(6147);
     static int rand;
-    static int[] dir_counts;
+    static int leadcount;
+    static int counttotal;
+
 
     /** Array containing all the possible movement directions. */
     static final Direction[] directions = {
@@ -34,17 +36,19 @@ strictfp class RunArchon {
     static void runArchon(RobotController rc) throws GameActionException {
 
         RobotInfo[] troops = rc.senseNearbyRobots();
+        MapLocation me = rc.getLocation();
         /*int minercounter = 0;
         for(RobotInfo robot : troops){
             if(robot.team == rc.getTeam() && robot.type == RobotType.MINER){
                 minercounter++;
             }
         }*/
-        if (rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) {
+        if(rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0){
+            rand = rng.nextInt(8);
             if (rand == 0) {
                 // Let's try to build a miner.
                 build(rc, RobotType.MINER);
-            } else if(rand < 5) {
+            } else if(rand < 3) {
                 // Let's try to build a builder.
                 build(rc, RobotType.BUILDER);
             } else {
@@ -55,7 +59,7 @@ strictfp class RunArchon {
             if (rand == 0) {
                 // Let's try to build a miner.
                 build(rc, RobotType.MINER);
-            } else if(rand < 3) {
+            } else if(rand < 4) {
                 // Let's try to build a builder.
                 build(rc, RobotType.BUILDER);
             } else {
@@ -67,9 +71,11 @@ strictfp class RunArchon {
             if (RobotPlayer.turnCount < 30 || rand == 0) {
                 // Let's try to build a miner.
                 build(rc, RobotType.MINER);
-            } else {
+            } else if(rand < 5) {
                 // Let's try to build a builder.
                 build(rc, RobotType.BUILDER);
+            } else {
+                build(rc, RobotType.SOLDIER);
             }
         }
 
@@ -83,26 +89,32 @@ strictfp class RunArchon {
             }
         }
 
-        //clean enemy troop direction logs
-        if(rc.getRobotCount()%50 == 0){
-            for(int i = 0; i < 8; i++){
-                rc.writeSharedArray(i+56, 0);
-            }
+        //add reflection locations
+        if(rc.getRoundNum() == 20){
+            addloc(rc, new MapLocation(me.x, rc.getMapHeight()-me.y-1));
+            addloc(rc, new MapLocation(rc.getMapWidth()-me.x-1, me.y));
+            addloc(rc, new MapLocation(rc.getMapWidth()-me.x-1, rc.getMapHeight()-me.y-1));
+        } else if (rc.getRoundNum()%100==0){
+            int x = rc.readSharedArray(0);
+            int y = rc.readSharedArray(1);
+            MapLocation loc = new MapLocation(x - 1, y - 1);
+            System.out.println("current target: " + loc);
         }
 
-        //tally up enemy directions
-        RobotInfo[] enemies = rc.senseNearbyRobots(-1, rc.getTeam().opponent());
-        if (enemies.length > 0) {
-            dir_counts = new int[8];
-            for (RobotInfo enemy : enemies){
-                //add to dircounts
-                dir_counts[RobotPlayer.dir_to_num(rc.getLocation().directionTo(enemy.location))]++;
-            }
-            for(int i = 0; i < 8; i++){
-                rc.writeSharedArray(i+56, rc.readSharedArray(i+56)+dir_counts[i]);
-            }
+        //keep track of lead, and by consequence, whether to rush
+        if(rc.getRoundNum()%100==0){
+            leadcount = 0;
+            counttotal = 0;
         }
-
+        if(rc.getTeamLeadAmount(rc.getTeam()) > rc.getTeamLeadAmount(rc.getTeam().opponent())){
+            leadcount++;
+        }
+        counttotal++;
+        if(leadcount > counttotal*3/4){
+            rc.writeSharedArray(49, 1);
+        } else {
+            rc.writeSharedArray(49, 0);
+        }
     }
 
     static void build(RobotController rc, RobotType type) throws GameActionException{
@@ -113,6 +125,24 @@ strictfp class RunArchon {
                 break;
             } else {
                 dir = dir.rotateRight();
+            }
+        }
+    }
+
+    static void addloc(RobotController rc, MapLocation loc) throws GameActionException{
+        System.out.println("Adding reflection loc: " + loc.toString());
+        int index = 0;
+        while(index < 32){
+            int x = rc.readSharedArray(index);
+            int y = rc.readSharedArray(index+1);
+            if(x==0 && y==0){
+                rc.writeSharedArray(index, loc.x+1);
+                rc.writeSharedArray(index+1, loc.y+1);
+                break;
+            } else if (loc.equals(new MapLocation(x-1, y-1))){
+                break;
+            } else {
+                index = index+2;
             }
         }
     }

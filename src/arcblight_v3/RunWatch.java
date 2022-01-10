@@ -1,4 +1,4 @@
-package arcblight_v1;
+package arcblight_v3;
 
 import battlecode.common.*;
 
@@ -22,6 +22,8 @@ strictfp class RunWatch {
      */
     static void runWatchtower(RobotController rc) throws GameActionException {
         since_enemy++;
+
+        RobotPlayer.marklocs(rc);
 
         MapLocation me = rc.getLocation();
         robots = rc.senseNearbyRobots(-1, rc.getTeam());
@@ -148,10 +150,14 @@ strictfp class RunWatch {
         }
 
         //check target array
-        int x = rc.readSharedArray(0);
-        int y = rc.readSharedArray(1);
-        if(!(x==0 && y==0)) {
-            target = new MapLocation(x - 1, y - 1);
+        if(rc.readSharedArray(49) == 1){
+            int x = rc.readSharedArray(0);
+            int y = rc.readSharedArray(1);
+            if(!(x==0 && y==0)) {
+                target = new MapLocation(x - 1, y - 1);
+            } else if (rc.readSharedArray(16) != 0){
+                target = new MapLocation(rc.readSharedArray(16) - 1, rc.readSharedArray(17) - 1);
+            }
         }
         RobotPlayer.removelocs(rc);
 
