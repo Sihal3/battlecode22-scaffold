@@ -43,42 +43,43 @@ strictfp class RunArchon {
                 minercounter++;
             }
         }*/
-        if(rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0){
-            rand = rng.nextInt(8);
-            if (rand == 0) {
-                // Let's try to build a miner.
-                build(rc, RobotType.MINER);
-            } else if(rand < 3) {
-                // Let's try to build a builder.
-                build(rc, RobotType.BUILDER);
+        if(rc.getRoundNum() < 100 || rc.getTeamLeadAmount(rc.getTeam()) > 200) {
+            if (rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) {
+                rand = rng.nextInt(8);
+                if (rand == 0) {
+                    // Let's try to build a miner.
+                    build(rc, RobotType.MINER);
+                } else if (rand < 3) {
+                    // Let's try to build a builder.
+                    build(rc, RobotType.BUILDER);
+                } else {
+                    build(rc, RobotType.SOLDIER);
+                }
+            } else if (rc.getTeamLeadAmount(rc.getTeam()) > 1000) {
+                rand = rng.nextInt(8);
+                if (rand == 0) {
+                    // Let's try to build a miner.
+                    build(rc, RobotType.MINER);
+                } else if (rand < 4) {
+                    // Let's try to build a builder.
+                    build(rc, RobotType.BUILDER);
+                } else {
+                    build(rc, RobotType.SOLDIER);
+                }
             } else {
-                build(rc, RobotType.SOLDIER);
-            }
-        } else if (rc.getTeamLeadAmount(rc.getTeam()) > 1000) {
-            rand = rng.nextInt(8);
-            if (rand == 0) {
-                // Let's try to build a miner.
-                build(rc, RobotType.MINER);
-            } else if(rand < 4) {
-                // Let's try to build a builder.
-                build(rc, RobotType.BUILDER);
-            } else {
-                build(rc, RobotType.SOLDIER);
-            }
-        } else {
-            //build miner or builder
-            rand = rng.nextInt(6);
-            if (RobotPlayer.turnCount < 30 || rand == 0) {
-                // Let's try to build a miner.
-                build(rc, RobotType.MINER);
-            } else if(rand < 5) {
-                // Let's try to build a builder.
-                build(rc, RobotType.BUILDER);
-            } else {
-                build(rc, RobotType.SOLDIER);
+                //build miner or builder
+                rand = rng.nextInt(6);
+                if (RobotPlayer.turnCount < 30 || rand == 0) {
+                    // Let's try to build a miner.
+                    build(rc, RobotType.MINER);
+                } else if (rand < 5) {
+                    // Let's try to build a builder.
+                    build(rc, RobotType.BUILDER);
+                } else {
+                    build(rc, RobotType.SOLDIER);
+                }
             }
         }
-
 
         //heal troops
         for(RobotInfo robot : troops){
