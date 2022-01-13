@@ -18,6 +18,7 @@ strictfp class RunBuilder {
     static MapLocation home;
     static MapLocation target;
     static MapLocation me;
+    static boolean am_healing;
     static int surrounded_count = 0;
 
 
@@ -30,6 +31,7 @@ strictfp class RunBuilder {
         me = rc.getLocation();
         build = false;
         buildtype = null;
+        am_healing = false;
         robots = rc.senseNearbyRobots();
         //mark home
         if(home == null){
@@ -57,6 +59,7 @@ strictfp class RunBuilder {
             rc.setIndicatorString("healing"+health);
             if (rc.canRepair(target)) {
                 rc.repair(target);
+                am_healing = true;
             }
             RobotPlayer.pathfind(rc, target);
         }
@@ -111,14 +114,15 @@ strictfp class RunBuilder {
 
         //self-destruct if on empty ground or clogged for too long
         //be a block if see enemy
-        if(rc.getTeamLeadAmount(rc.getTeam()) > 1000 || rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length == 0){
-            if(rc.senseLead(rc.getLocation()) == 0){
-                rc.disintegrate();
-            } else if (is_surrounded(rc)) {
-                rc.disintegrate();
+        if (!am_healing) {
+            if (rc.getTeamLeadAmount(rc.getTeam()) > 1000 || rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length == 0) {
+                if (rc.senseLead(rc.getLocation()) == 0) {
+                    rc.disintegrate();
+                } else if (is_surrounded(rc)) {
+                    rc.disintegrate();
+                }
             }
         }
-
 
     }
 
