@@ -9,6 +9,30 @@ import java.util.Random;
  * The run() method inside this class is like your main function: this is what we'll call once your robot
  * is created!
  */
+
+/**
+List of changes planned for Arktos:
+
+ 1. Improve miner ability to scout out and spread in search of lead.
+ (Recognize when enough miners to deal with patch of lead and leave?)
+
+ 2. Improve initial defensive behavior to ward off rushes
+ Monolithic walls are the best defense, so perhaps build a solid radius of towers?
+
+ 3. Move 2ndary archons closer to primary archons, they do be useless otherwise.
+
+ 4. Add mutation code, since mutations are really effective now.
+
+ 5. Perhaps add soldiers to initial defense? Right now I don't use them at first.
+ Again, solid radius perhaps?
+
+ 6. Add use of labs and sages once dominant.
+
+ 7. Add pathfinding, at least something basic so attacking troops are more effective
+
+ 8. Improve troop rush once dominance is established.
+
+ */
 public strictfp class RobotPlayer {
 
     /**
@@ -168,9 +192,12 @@ public strictfp class RobotPlayer {
     }
 
     public static void removelocs(RobotController rc) throws GameActionException{
+        //these are surprise variables to help us later
         int index = 0;
         MapLocation loc;
         int counter;
+
+        //target locations are stored from index 0 to 32
         while(index < 32){
             int x = rc.readSharedArray(index);
             int y = rc.readSharedArray(index+1);

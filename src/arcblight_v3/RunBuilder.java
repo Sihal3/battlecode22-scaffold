@@ -48,18 +48,21 @@ strictfp class RunBuilder {
         int health = 0;
         target = null;
         for(RobotInfo robot : robots){
-            if(robot.team == rc.getTeam() && robot.type.isBuilding() && robot.health < robot.type.health){
-                if(robot.health > health) {
+            if(robot.team == rc.getTeam() && robot.type.isBuilding()){
+                if(robot.health < robot.type.getMaxHealth(robot.level) && robot.health > health) {
                     target = robot.location;
                     health = robot.health * 100;
+                }
+                if(rc.canMutate(robot.location)){
+                    rc.mutate(robot.location);
                 }
             }
         }
         if(target != null){
             rc.setIndicatorString("healing"+health);
+            am_healing = true;
             if (rc.canRepair(target)) {
                 rc.repair(target);
-                am_healing = true;
             }
             RobotPlayer.pathfind(rc, target);
         }

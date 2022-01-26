@@ -43,6 +43,8 @@ strictfp class RunArchon {
                 minercounter++;
             }
         }*/
+
+        //which troops to build
         if(rc.getRoundNum() < 100 || rc.getTeamLeadAmount(rc.getTeam()) > 200) {
             if (rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) {
                 rand = rng.nextInt(8);
@@ -116,6 +118,8 @@ strictfp class RunArchon {
         } else {
             rc.writeSharedArray(49, 0);
         }
+
+
     }
 
     static void build(RobotController rc, RobotType type) throws GameActionException{
