@@ -53,9 +53,6 @@ strictfp class RunBuilder {
                     target = robot.location;
                     health = robot.health * 100;
                 }
-                if(rc.canMutate(robot.location)){
-                    rc.mutate(robot.location);
-                }
             }
         }
         if(target != null){

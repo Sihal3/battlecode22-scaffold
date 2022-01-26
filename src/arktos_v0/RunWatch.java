@@ -11,7 +11,7 @@ strictfp class RunWatch {
      * import at the top of this file. Here, we *seed* the RNG with a constant number (6147); this makes sure
      * we get the same sequence of numbers every time this code is run. This is very useful for debugging!
      */
-    static int since_enemy = 0;
+    static int since_enemy = 100;
     static int enemycount;
     static boolean mobile = false;
     static RobotInfo[] robots;
@@ -28,10 +28,6 @@ strictfp class RunWatch {
         MapLocation me = rc.getLocation();
         robots = rc.senseNearbyRobots(-1, rc.getTeam());
 
-        //decide mode
-        if(rc.getMode() == RobotMode.PROTOTYPE) {
-            mobile = near_watch(rc, me);
-        }
 
         //attack enemy if present
         MapLocation enemy = findenemy(rc, me);
@@ -58,32 +54,33 @@ strictfp class RunWatch {
             }
         }
 
-        if(mobile) {
-            //go to mobile mode
-            if (since_enemy > 20 && near_watch(rc, me)) {
-                if (rc.getMode() == RobotMode.TURRET && rc.canTransform()) {
-                    rc.transform();
-                }
-            }
-            //go to turret mode
-            if (enemycount > 1 && !adjacent_watch(rc, me)) {
-                if (rc.getMode() == RobotMode.PORTABLE && rc.canTransform()) {
-                    rc.transform();
-                }
-            }
 
-            //move if in portable
-            if (rc.getMode() == RobotMode.PORTABLE) {
-                target = findtarget(rc, me);
-                if (target != null) {
-                    //move towards target, if exists
-                    RobotPlayer.pathfind(rc, target);
-                } else {
-                    // If nothing found, move randomly.
-                    RobotPlayer.moverandom(rc);
-                }
+        //go to mobile mode
+        if (since_enemy > 100) {
+            if (rc.getMode() == RobotMode.TURRET && rc.canTransform()) {
+                rc.transform();
             }
         }
+
+        //go to turret mode
+        if (enemycount > 1) {
+            if (rc.getMode() == RobotMode.PORTABLE && rc.canTransform()) {
+                rc.transform();
+            }
+        } //else if (enemycount<100 && watchWall())
+
+        //move if in portable
+        if (rc.getMode() == RobotMode.PORTABLE) {
+            target = findtarget(rc, me);
+            if (target != null) {
+                //move towards target, if exists
+                RobotPlayer.pathfind(rc, target);
+            } else {
+                // If nothing found, move randomly.
+                RobotPlayer.moverandom(rc);
+            }
+        }
+
 
     }
 
@@ -135,8 +132,10 @@ strictfp class RunWatch {
 
     public static MapLocation findtarget(RobotController rc, MapLocation me) throws GameActionException{
 
+        RobotPlayer.removelocs(rc);
+
         //find enemies around
-        MapLocation target = new MapLocation(0,0);
+        MapLocation target = new MapLocation(1000,1000);
         int radius = rc.getType().actionRadiusSquared;
         Team opponent = rc.getTeam().opponent();
         RobotInfo[] enemies = rc.senseNearbyRobots(radius, opponent);
@@ -154,31 +153,74 @@ strictfp class RunWatch {
             int x = rc.readSharedArray(0);
             int y = rc.readSharedArray(1);
             if(!(x==0 && y==0)) {
-                target = new MapLocation(x - 1, y - 1);
+                return new MapLocation(x - 1, y - 1);
             } else if (rc.readSharedArray(16) != 0){
-                target = new MapLocation(rc.readSharedArray(16) - 1, rc.readSharedArray(17) - 1);
+                return new MapLocation(rc.readSharedArray(16) - 1, rc.readSharedArray(17) - 1);
             }
         }
-        RobotPlayer.removelocs(rc);
 
-        return (target.x > 0)? target : null;
+        //move towards planted watches
+        //finds closest builder, multiple closest if same distance, and moves away.
+        int diff;
+        int multiple = 1;
+        boolean wall = false;
+
+        //find closest loc, mark if multiple closest
+        for (RobotInfo robot : robots) {
+            if (robot.team == rc.getTeam() && robot.type == RobotType.WATCHTOWER) {
+                if(!wall && robot.mode == RobotMode.PORTABLE) {
+                    diff = robot.location.distanceSquaredTo(me) - target.distanceSquaredTo(me);
+                    if (diff < 0) {
+                        target = robot.location;
+                        multiple = 1;
+                    } else if (diff == 0) {
+                        multiple++;
+                    }
+                } else if (!wall && robot.mode == RobotMode.TURRET){
+                    wall = true;
+                    target = robot.location;
+                    multiple = 1;
+                } else if (wall && robot.mode == RobotMode.TURRET){
+                    if(target.distanceSquaredTo(me) > robot.location.distanceSquaredTo(me)){
+                        target = robot.location;
+                    }
+                }
+
+            }
+        }
+
+        // if multiple, average
+        if (multiple > 1) {
+            int dx = 0;
+            int dy = 0;
+            for (RobotInfo robot : rc.senseNearbyRobots(target.distanceSquaredTo(me), rc.getTeam())) {
+                if (robot.type == RobotType.BUILDER) {
+                    dx += robot.location.x - me.x;
+                    dy += robot.location.y - me.y;
+                }
+            }
+            target = new MapLocation(me.x + dx, me.y + dy);
+        }
+
+        //inverts direction if moving away instead of walling
+        if(!wall){
+            target = me.subtract(me.directionTo(target));
+        }
+
+        return (target.x < 1000)? target : null;
     }
 
-    public static boolean near_watch(RobotController rc, MapLocation me) throws GameActionException{
-        for(RobotInfo robot : robots){
-            if(robot.type == RobotType.WATCHTOWER && robot.location.distanceSquaredTo(me) < 11){
-                return true;
-            }
-        }
 
-        return false;
-    }
-    public static boolean adjacent_watch(RobotController rc, MapLocation me) throws GameActionException{
+    public static MapLocation watchWall(RobotController rc, MapLocation me) throws GameActionException{
+        MapLocation target = new MapLocation(1000,1000);
         for(RobotInfo robot : robots){
-            if(robot.type == RobotType.WATCHTOWER && robot.location.distanceSquaredTo(me) == 1){
-                return true;
+            if(robot.type == RobotType.WATCHTOWER && robot.mode == RobotMode.TURRET){
+                if(target.distanceSquaredTo(me) > robot.location.distanceSquaredTo(me)){
+                    target = robot.location;
+                }
             }
         }
-        return false;
+        return target;
+
     }
 }

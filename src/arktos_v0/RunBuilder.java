@@ -46,14 +46,17 @@ strictfp class RunBuilder {
         int health = 0;
         target = null;
         for(RobotInfo robot : robots){
-            if(robot.team == rc.getTeam() && robot.type.isBuilding() && robot.health < robot.type.health){
-                if(robot.health > health) {
+            if(robot.team == rc.getTeam() && robot.type.isBuilding()){
+                if(robot.health < robot.type.getMaxHealth(robot.level) && robot.health > health) {
                     target = robot.location;
                     health = robot.health * 100;
                 }
+                if(rc.canMutate(robot.location) && robot.level == 1){
+                    rc.mutate(robot.location);
+                }
             }
         }
-        if(target != null){
+        if (target != null){
             rc.setIndicatorString("healing"+health);
             if (rc.canRepair(target)) {
                 rc.repair(target);
@@ -66,32 +69,25 @@ strictfp class RunBuilder {
         //try to build if no other towers
         Direction builder = builddir(rc);
         if (builder != null) {
-            boolean tower_in_range = false;
             boolean proto = false;
             for (RobotInfo robot : robots) {
                 if (robot.team == rc.getTeam() && robot.type == RobotType.WATCHTOWER) {
-                    if(robot.location.distanceSquaredTo(me.add(builder)) < 11){
-                        tower_in_range = true;
-                    }
                     if(robot.mode == RobotMode.PROTOTYPE){
                         proto = true;
-                    }
-                    if(tower_in_range && proto){
                         break;
                     }
                 }
             }
-            if (!tower_in_range) {
-                rc.setIndicatorString("building far");
-                buildwatch(rc, builder);
-                return;
-            } else if (!proto && rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0){
+            if (!proto && rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0){
                 rc.setIndicatorString("enemy! building");
                 buildwatch(rc, builder);
                 return;
-            } else if (!proto && rc.getTeamLeadAmount(rc.getTeam())>2000) {
-                buildwatch(rc, builder);
-                return;
+            } else if (!proto) {
+                if ((rc.getTeamLeadAmount(rc.getTeam())*2)/1000-2 > rc.readSharedArray(38)) {
+                    rc.buildRobot(RobotType.LABORATORY, builder);
+                } else {
+                    buildwatch(rc, builder);
+                }
             }
         }
 

@@ -14,23 +14,25 @@ import java.util.Random;
 List of changes planned for Arktos:
 
  1. Improve miner ability to scout out and spread in search of lead.
- (Recognize when enough miners to deal with patch of lead and leave?)
+ (Recognize when enough miners to deal with patch of lead and leave?) (Destructively mine?)
 
  2. Improve initial defensive behavior to ward off rushes
  Monolithic walls are the best defense, so perhaps build a solid radius of towers?
-
- 3. Move 2ndary archons closer to primary archons, they do be useless otherwise.
-
- 4. Add mutation code, since mutations are really effective now.
-
  5. Perhaps add soldiers to initial defense? Right now I don't use them at first.
  Again, solid radius perhaps?
 
- 6. Add use of labs and sages once dominant.
+ 9. Improve attacking troop micro-code
 
- 7. Add pathfinding, at least something basic so attacking troops are more effective
+ 6. Add use of labs and sages once dominant. (or maybe for initial D)
 
- 8. Improve troop rush once dominance is established.
+ 3. Move 2ndary archons closer to primary archons, they do be useless otherwise. CHECK
+
+ 4. Add mutation code, since mutations are really effective now. CHECK
+
+ 7. Add pathfinding, at least something basic so attacking troops are more effective. Probs not.
+
+ 8. Improve troop rush once dominance is established. Probs not.
+
 
  */
 public strictfp class RobotPlayer {

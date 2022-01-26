@@ -33,5 +33,16 @@ strictfp class RunLab {
      */
     static void runLaboratory(RobotController rc) throws GameActionException {
 
+        //add to lab tally
+        if(RobotPlayer.turnCount == 1){
+            rc.writeSharedArray(38, rc.readSharedArray(38)+1);
+        }
+
+        //make gold
+        if(rc.getTeamLeadAmount(rc.getTeam()) > 1000){
+            if(rc.canTransmute()){
+                rc.transmute();
+            }
+        }
     }
 }

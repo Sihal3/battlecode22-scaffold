@@ -43,43 +43,42 @@ strictfp class RunArchon {
                 minercounter++;
             }
         }*/
-        if(rc.getRoundNum() < 100 || rc.getTeamLeadAmount(rc.getTeam()) > 200) {
-            if (rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) {
-                rand = rng.nextInt(8);
-                if (rand == 0) {
-                    // Let's try to build a miner.
-                    build(rc, RobotType.MINER);
-                } else if (rand < 3) {
-                    // Let's try to build a builder.
-                    build(rc, RobotType.BUILDER);
-                } else {
-                    build(rc, RobotType.SOLDIER);
-                }
-            } else if (rc.getTeamLeadAmount(rc.getTeam()) > 1000) {
-                rand = rng.nextInt(8);
-                if (rand == 0) {
-                    // Let's try to build a miner.
-                    build(rc, RobotType.MINER);
-                } else if (rand < 4) {
-                    // Let's try to build a builder.
-                    build(rc, RobotType.BUILDER);
-                } else {
-                    build(rc, RobotType.SOLDIER);
-                }
+        if (rc.senseNearbyRobots(-1, rc.getTeam().opponent()).length > 0) {
+            rand = rng.nextInt(8);
+            if (rand == 0) {
+                // Let's try to build a miner.
+                build(rc, RobotType.MINER);
+            } else if (rand == 1) {
+                // Let's try to build a builder.
+                build(rc, RobotType.BUILDER);
             } else {
-                //build miner or builder
-                rand = rng.nextInt(6);
-                if (RobotPlayer.turnCount < 30 || rand == 0) {
-                    // Let's try to build a miner.
-                    build(rc, RobotType.MINER);
-                } else if (rand < 5) {
-                    // Let's try to build a builder.
-                    build(rc, RobotType.BUILDER);
-                } else {
-                    build(rc, RobotType.SOLDIER);
-                }
+                build(rc, RobotType.SOLDIER);
+            }
+        } else if (rc.getTeamLeadAmount(rc.getTeam()) > 1000) {
+            rand = rng.nextInt(8);
+            if (rand == 0) {
+                // Let's try to build a miner.
+                build(rc, RobotType.MINER);
+            } else if (rand < 4) {
+                // Let's try to build a builder.
+                build(rc, RobotType.BUILDER);
+            } else {
+                build(rc, RobotType.SOLDIER);
+            }
+        } else {
+            //build miner or builder
+            rand = rng.nextInt(6);
+            if (RobotPlayer.turnCount < 30 || rand == 0) {
+                // Let's try to build a miner.
+                build(rc, RobotType.MINER);
+            } else if (rand < 4) {
+                // Let's try to build a builder.
+                build(rc, RobotType.BUILDER);
+            } else {
+                build(rc, RobotType.SOLDIER);
             }
         }
+
 
         //heal troops
         for(RobotInfo robot : troops){
@@ -91,7 +90,7 @@ strictfp class RunArchon {
         }
 
         //add reflection locations
-        if(rc.getRoundNum() == 20){
+        if(rc.getRoundNum() == 1){
             addloc(rc, new MapLocation(me.x, rc.getMapHeight()-me.y-1));
             addloc(rc, new MapLocation(rc.getMapWidth()-me.x-1, me.y));
             addloc(rc, new MapLocation(rc.getMapWidth()-me.x-1, rc.getMapHeight()-me.y-1));
@@ -116,6 +115,34 @@ strictfp class RunArchon {
         } else {
             rc.writeSharedArray(49, 0);
         }
+
+
+        //add home base to array
+        if(rc.readSharedArray(36) == 0){
+            rc.writeSharedArray(36, me.x+1);
+            rc.writeSharedArray(37, me.y+1);
+        } else {
+            //move toward home base if secondary and if not close
+            MapLocation home = new MapLocation(rc.readSharedArray(36)-1, rc.readSharedArray(37)-1);
+            if(home.distanceSquaredTo(me) > 40){
+                //turn into mobile
+                if(rc.getMode() == RobotMode.TURRET && rc.canTransform()){
+                    rc.transform();
+                }
+
+                //move towards home
+                RobotPlayer.pathfind(rc, home);
+
+            } else {
+
+                //transform back
+                if(rc.getMode() == RobotMode.PORTABLE && rc.canTransform()){
+                    rc.transform();
+                }
+            }
+        }
+
+
     }
 
     static void build(RobotController rc, RobotType type) throws GameActionException{
