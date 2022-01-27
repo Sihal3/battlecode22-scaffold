@@ -1,4 +1,4 @@
-package arktos_v0;
+package arktos_v1;
 
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
@@ -6,7 +6,7 @@ import battlecode.common.RobotController;
 
 import java.util.Random;
 
-strictfp class RunLab {
+strictfp class RunSage {
     /**
      * A random number generator.
      * We will use this RNG to make some random moves. The Random class is provided by the java.util.Random
@@ -28,20 +28,10 @@ strictfp class RunLab {
     };
 
     /**
-     * Run a single turn for a Laboratory.
+     * Run a single turn for a Sage.
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
-    static void runLaboratory(RobotController rc) throws GameActionException {
-
-        //add to lab tally
-        if(RobotPlayer.turnCount == 1){
-            rc.writeSharedArray(38, rc.readSharedArray(38)+1);
-        }
-
-        //make gold
-        if(rc.canTransmute()){
-            rc.transmute();
-        }
+    static void runSage(RobotController rc) throws GameActionException {
 
     }
 }

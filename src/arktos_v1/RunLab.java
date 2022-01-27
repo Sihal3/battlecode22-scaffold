@@ -1,4 +1,4 @@
-package arktos_v0;
+package arktos_v1;
 
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
