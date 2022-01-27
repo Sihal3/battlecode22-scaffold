@@ -15,6 +15,7 @@ strictfp class RunArchon {
     static int rand;
     static int leadcount;
     static int counttotal;
+    static boolean initial = true;
 
 
     /** Array containing all the possible movement directions. */
@@ -68,14 +69,21 @@ strictfp class RunArchon {
         } else {
             //build miner or builder
             rand = rng.nextInt(6);
-            if (RobotPlayer.turnCount < 30 || rand == 0) {
+            if (RobotPlayer.turnCount < 20) {
+                if (initial = true) {
+                    build(rc, RobotType.SOLDIER);
+                    initial = false;
+                }
+                else if (initial = false) {
+                    build(rc, RobotType.MINER);
+                    initial = true;
+                }
+            } else if (RobotPlayer.turnCount < 30  || rand == 0) {
                 // Let's try to build a miner.
                 build(rc, RobotType.MINER);
             } else if (rand < 4) {
                 // Let's try to build a builder.
                 build(rc, RobotType.BUILDER);
-            } else {
-                build(rc, RobotType.SOLDIER);
             }
         }
 
