@@ -68,14 +68,14 @@ strictfp class RunArchon {
         } else {
             //build miner or builder
             rand = rng.nextInt(6);
-            if (RobotPlayer.turnCount < 30 || rand == 0) {
+            if (RobotPlayer.turnCount < 20) {
+                build(rc, RobotType.SOLDIER);
+            } else if (RobotPlayer.turnCount < 30  || rand == 0) {
                 // Let's try to build a miner.
                 build(rc, RobotType.MINER);
             } else if (rand < 4) {
                 // Let's try to build a builder.
                 build(rc, RobotType.BUILDER);
-            } else {
-                build(rc, RobotType.SOLDIER);
             }
         }
 
