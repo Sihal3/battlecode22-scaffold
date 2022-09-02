@@ -1,5 +1,7 @@
 # Battlecode 2022 Scaffold
 
+My engineered-up bot for the MIT Battlecode 2022 scaffold; contains arktos-v0, v1, arcblight-v1, v2, v3, arclight-v0.
+
 This is the Battlecode 2022 scaffold, containing an `examplefuncsplayer`. Read https://play.battlecode.org/getting-started!
 
 ### Project Structure
